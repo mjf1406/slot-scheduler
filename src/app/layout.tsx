@@ -3,11 +3,11 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { poppins } from "./fonts";
 import { Toaster } from "~/components/ui/toaster";
 import { ThemeProvider } from "~/components/theme/theme-provider";
+import Providers from "./providers";
 
 export const metadata = {
-  title: "Report Card Helper",
-  description:
-    "Reduce the amount of time and tedium on making your report cards.",
+  title: "Slotted",
+  description: "Easily scheduling for teachers",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
@@ -26,8 +26,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <main>{children}</main>
-            <Toaster />
+            <Providers>
+              <main>{children}</main>
+              <Toaster />
+            </Providers>
           </ThemeProvider>
         </body>
       </html>

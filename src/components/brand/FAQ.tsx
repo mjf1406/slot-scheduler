@@ -14,11 +14,14 @@ type FAQ = {
 const FrequentlyAskedQuestions: React.FC = () => {
   const faqs: FAQ[] = [
     {
-      question: "What is an 11-11 workout?",
+      question: "What does is Slotted?",
       answer:
-        "An 11-11 workout is comprised of 4 exercises: (1) upper body push, (2) upper body pull, (3) lower body, and (4) abs.",
+        "It's a webapp that I designed to make it easier to sort out each of my weeks as a teacher. I set up a default timetable with default classes that I can quickly change the length of, then move them around the week.",
     },
-    { question: "How do I get started?", answer: "To get started, you can..." },
+    {
+      question: "How do I get started?",
+      answer: "To get started, just click Sign in in the top-right corner!",
+    },
   ];
 
   return (
