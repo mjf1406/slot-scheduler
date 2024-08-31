@@ -1,6 +1,6 @@
 # Slotted
 
-Effortlessly set up predefined time slots, then drag and drop events all around.
+Create and manage timetables. Use predefined slots with drag-and-drop functionality to organize them.
 
 ## To-do List
 
@@ -12,6 +12,9 @@ Effortlessly set up predefined time slots, then drag and drop events all around.
 - backend: set up the webhook
   - Start up ngrok to use the route in `~/app/api/webhooks/route.ts`
   - Set up [Clerk Webhook](https://clerk.com/docs/integrations/webhooks/sync-data)
+- Settings
+  - Change first day of the week
+- fixed: sidebar doesn't load on home page on mobile
 
 ## Change Log
 
@@ -19,7 +22,6 @@ Effortlessly set up predefined time slots, then drag and drop events all around.
 
 - UX: updated FAQ in `~/components/brand/FAQ.tsx`
 - set up navbar and sidebar
--
 
 ## Dependencies
 

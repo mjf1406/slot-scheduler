@@ -20,8 +20,8 @@ export default function HomePage() {
             </h1>
           </div>
           <div className="max-w-lg text-center text-xl tracking-tight md:text-2xl">
-            Effortlessly set up predefined time slots, then drag and drop events
-            all around.
+            Create and manage timetables. Use predefined slots with
+            drag-and-drop functionality to organize them.
           </div>
           <div className="space-x-4">
             <SignedOut>
