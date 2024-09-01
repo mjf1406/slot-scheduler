@@ -57,21 +57,7 @@ export function getMenuList(pathname: string): Group[] {
           active: pathname.includes("/classes"),
           icon: CalendarCheck2,
           under_construction: false,
-          submenus: [
-            // TODO: dynamically set these 
-            {
-              href: "/timetables/tt1",
-              label: "TT 1",
-              active: pathname.includes("/timetable/tt1"),
-              under_construction: true,
-            },
-            {
-              href: "/timetables/tt2",
-              label: "TT 2",
-              active: pathname.includes("/timetable/tt2"),
-              under_construction: true,
-            }
-          ]
+          submenus: []
         }
       ]
     },
