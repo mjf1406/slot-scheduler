@@ -4,19 +4,26 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 ## To-do List
 
-### p0
+### p1
 
-- UX: user can now create a new timetable
-  - the setup has them moving slots around a week-long
-- backend: set up the DB schema in `~/server/db/schema.ts`
 - backend: set up the webhook
   - Start up ngrok to use the route in `~/app/api/webhooks/route.ts`
   - Set up [Clerk Webhook](https://clerk.com/docs/integrations/webhooks/sync-data)
-- Settings
-  - Change first day of the week
 - fixed: sidebar doesn't load on home page on mobile
 
+### p0
+
+- UX: user can now set up their newly created timetables
+- UX: make it so the user can chooses whether this class applies to all timetables. Defaults to current only
+
 ## Change Log
+
+2024/09/01
+
+- UI: user can now add classes to a specific timetable
+- backend: set up the DB schema in `~/server/db/schema.ts`
+- UI: user can now create timetables
+- UI: added a timetable select
 
 2024/08/31
 

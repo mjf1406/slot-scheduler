@@ -1,5 +1,6 @@
 import { sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
+import type { Slot } from "./types";
 
 export const users = sqliteTable('users',
   {
@@ -24,6 +25,21 @@ export const timetables = sqliteTable('timetables',
     timetable_id: text('timetable_id').notNull().primaryKey(),
     days: text('days', { mode: 'json' }).notNull(),
     name: text('name').notNull(),
+    slots: text('slots', { mode: 'json' }).$type<Slot[]>()
   }
 )
 
+export const classes = sqliteTable('classes',
+  {
+    user_id: text('user_id').notNull().references(() => users.user_id),
+    timetable_id: text('timetable_id').notNull().references(() => timetables.timetable_id),
+    class_id: text('class_id').notNull().primaryKey(),
+    name: text('name').notNull(),
+    default_day: text('default_day'),
+    default_start: text('default_start'),
+    default_end: text('default_end'),
+    day: text('day'),
+    start: text('start'),
+    end: text('end'),
+  }
+)
