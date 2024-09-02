@@ -84,12 +84,12 @@ export async function createClass(data: {
         timetable_id: data.timetable_id,
         class_id: class_id,
         name: data.name,
-        default_day: data.default_day || null,
-        default_start: data.default_start || null,
-        default_end: data.default_end || null,
-        day: data.default_day || null,
-        start: data.default_start || null,
-        end: data.default_end || null,
+        default_day: data.default_day ?? null,
+        default_start: data.default_start ?? null,
+        default_end: data.default_end ?? null,
+        day: data.default_day ?? null,
+        start: data.default_start ?? null,
+        end: data.default_end ?? null,
     });
 
     revalidatePath('/timetables');

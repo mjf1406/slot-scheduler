@@ -22,8 +22,14 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { createClass } from "../actions"; // Adjust the import path as needed
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { createClass } from "../actions";
 import { toast } from "~/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { useTimetables } from "../hooks";
@@ -65,9 +71,9 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
         form.reset();
         await refetchTimetables();
       } else {
-        form.setError('name', { 
-          type: 'manual',
-          message: result.message
+        form.setError("name", {
+          type: "manual",
+          message: result.message,
         });
       }
     } catch (error) {
@@ -111,14 +117,25 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Default Day</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a day" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+                      {[
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday",
+                        "Sunday",
+                      ].map((day) => (
                         <SelectItem key={day} value={day}>
                           {day}
                         </SelectItem>
