@@ -35,10 +35,10 @@ export async function GET() {
             timetable_id: timetable.timetable_id,
             days: timetable.days,
             name: timetable.name,
-            slots,
+            slots: slots.filter(i => i.timetable_id === timetable.timetable_id),
             start_time: timetable.start_time,
             end_time: timetable.end_time,
-            classes: [], // Add an empty classes array
+            classes: [],
         }));
 
         // Format classes

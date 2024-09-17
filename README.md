@@ -9,7 +9,6 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 - backend: set up the webhook
   - Start up ngrok to use the route in `~/app/api/webhooks/route.ts`
   - Set up [Clerk Webhook](https://clerk.com/docs/integrations/webhooks/sync-data)
-- fixed: sidebar doesn't load on home page on mobile
 
 ### p1
 
@@ -21,13 +20,15 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 - backend: when dragging a class to a slot, DO SOMETHING IN BACKEND -- needs thinking, hard
 - UX: when dragging a class to a slot, the class needs to be over the slot with some padding
 - UI: added a today button to make the calendar go to the week that has today in it
-- UX: can edit a timetable
-- UX: can delete a timetable
 
 ## Change Log
 
 2024/09/17
 
+- UI: removed breadcrumb in the page and added it to the navbar
+- UI: removed the sidebar and sheetmenu (can easily be added in by uncommenting)
+- UX: can edit a timetable
+- UX: can delete a timetable
 - fixed font color for classes to render based on their bg color for best contrast
 - slots: added a button to quickly cut the duration in half, while maintaining the same start time in the edit dialog
 - slots: added a button to quickly double the duration while maintaining the same start time in the edit dialog

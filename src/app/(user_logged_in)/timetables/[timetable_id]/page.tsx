@@ -6,15 +6,6 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { timetablesOptions } from "~/app/api/queryOptions";
 import { ContentLayout } from "~/components/admin-panel/content-layout";
 import LoadingPage from "~/components/Loading";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from "~/components/ui/breadcrumb";
-import Link from "next/link";
 import { CreateClassDialog } from "./components/class/CreateClassDialog";
 import WeekView from "./components/WeekView";
 import { CreateSlotDialog } from "./components/slot/CreateSlotDialog";
@@ -166,27 +157,8 @@ export default function TimetablePage() {
 
   return (
     <ContentLayout title="Timetables">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/">Home</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/timetables">Timetables</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{selectedTimetable.name}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
       <Suspense fallback={<LoadingPage />}>
-        <div className="container px-0 py-8">
+        <div className="container px-0">
           <div id="timetable" className="mt-5">
             <div className="flex gap-5">
               <h1 className="mb-2 text-3xl font-bold">

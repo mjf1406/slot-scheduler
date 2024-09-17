@@ -13,6 +13,7 @@ import type { Class } from "~/server/db/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconName } from "@fortawesome/fontawesome-svg-core";
 import { getContrastColor } from "~/lib/utils";
+import { useTheme } from "next-themes";
 
 interface ClassItemProps {
   classData: Class;
@@ -28,10 +29,14 @@ const ClassItem: React.FC<ClassItemProps> = ({
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const { theme } = useTheme();
 
   const textColorClass = useMemo(() => {
-    return getContrastColor(classData.color || "#ffffff");
-  }, [classData.color]);
+    return getContrastColor(
+      classData.color || "#ffffff",
+      theme as "light" | "dark",
+    );
+  }, [classData.color, theme]);
 
   const handleEdit = async (updatedClass: Class) => {
     await onEdit(updatedClass);

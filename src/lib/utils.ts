@@ -43,15 +43,41 @@ export const formatTime = (time: number): string => {
 
 export function getContrastColor(
   hexColor: string,
+  theme?: 'light' | 'dark'
 ): "text-foreground/90" | "text-background/80" {
-  // Convert hex to RGB
   const r = parseInt(hexColor.slice(1, 3), 16);
   const g = parseInt(hexColor.slice(3, 5), 16);
   const b = parseInt(hexColor.slice(5, 7), 16);
-
-  // Calculate relative luminance
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-  // Return black for light colors and white for dark colors
-  return luminance > 0.5 ? "text-background/80" : "text-foreground/90";
+  if (theme === 'dark') {
+    return luminance < 0.5 ? "text-foreground/90" : "text-background/80";
+  } else {
+    return luminance > 0.5 ? "text-foreground/90" : "text-background/80";
+  }
 }
+
+export const convertTo24HourFormat = (time: string): string | undefined => {
+  const parts = time.split(" ");
+  if (parts.length !== 2) {
+    throw new Error("Invalid time format. Expected 'HH:MM AM/PM'");
+  }
+  const [timeStr, period] = parts;
+  if (!timeStr) return undefined
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  if (!hoursStr || !minutesStr || !period) {
+    throw new Error("Invalid time format. Expected 'HH:MM AM/PM'");
+  }
+  let hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+  if (isNaN(hours) || isNaN(minutes) || hours < 1 || hours > 12 || minutes < 0 || minutes > 59) {
+    throw new Error("Invalid time values");
+  }
+
+  if (period.toUpperCase() === "PM" && hours !== 12) {
+    hours += 12;
+  } else if (period.toUpperCase() === "AM" && hours === 12) {
+    hours = 0;
+  }
+
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+};
