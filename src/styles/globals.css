@@ -51,7 +51,7 @@ html {
     --accent: 148 67% 50%;
     --accent-foreground: 147 47% 4%;
     --destructive: 0 62% 55%;
-    --destructive-foreground: 0 62% 65%;
+    --destructive-foreground: var(--background);
     --destructive-background: 0 62% 45%;
     --border: 147 47% 60%;
     --input: 147 47% 80%;

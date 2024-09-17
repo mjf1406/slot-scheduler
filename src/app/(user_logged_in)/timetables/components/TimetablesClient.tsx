@@ -21,17 +21,6 @@ import { timetablesOptions } from "~/app/api/queryOptions";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { convertTo24HourFormat, formatTime, timeToMinutes } from "~/lib/utils";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -51,10 +40,11 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { toast } from "~/components/ui/use-toast";
-import { Edit, Loader2, Trash2 } from "lucide-react";
+import { Edit, Loader2 } from "lucide-react";
 import { WEEKDAYS } from "~/lib/constants";
 import { deleteTimetable, updateTimetable } from "../actions";
 import type { Timetable } from "~/server/db/types";
+import { DeleteDialog } from "./DeleteClassDialog";
 
 const ORDERED_DAYS = [
   "Monday",
@@ -94,9 +84,13 @@ export default function Timetables() {
   );
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeletingTimetableId, setIsDeletingTimetableId] = useState<
-    string | null
-  >(null);
+  const [deletingTimetableId, setDeletingTimetableId] = useState<string | null>(
+    null,
+  );
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [timetableToDelete, setTimetableToDelete] = useState<Timetable | null>(
+    null,
+  );
   const queryClient = useQueryClient();
 
   const form = useForm<FormValues>({
@@ -165,16 +159,24 @@ export default function Timetables() {
     }
   };
 
-  const handleDelete = async (timetableId: string) => {
-    setIsDeletingTimetableId(timetableId);
+  const handleDelete = (timetable: Timetable) => {
+    setTimetableToDelete(timetable);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!timetableToDelete) return;
+    setDeletingTimetableId(timetableToDelete.timetable_id);
     try {
-      const result = await deleteTimetable({ timetableId });
+      const result = await deleteTimetable({
+        timetableId: timetableToDelete.timetable_id,
+      });
       if (result.success) {
+        await queryClient.invalidateQueries({ queryKey: ["timetables"] });
         toast({
           title: "Success",
           description: "Timetable deleted successfully",
         });
-        await queryClient.invalidateQueries({ queryKey: ["timetables"] });
       } else {
         throw new Error(result.error ?? "Failed to delete timetable");
       }
@@ -189,7 +191,9 @@ export default function Timetables() {
         variant: "destructive",
       });
     } finally {
-      setIsDeletingTimetableId(null);
+      setDeletingTimetableId(null);
+      setIsDeleteDialogOpen(false);
+      setTimetableToDelete(null);
     }
   };
 
@@ -412,33 +416,7 @@ export default function Timetables() {
                       </Form>
                     </DialogContent>
                   </Dialog>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size={"icon"}>
-                        <Trash2 size={20} className="text-destructive" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Are you absolutely sure?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently
-                          delete your timetable and remove your data from our
-                          servers.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(timetable.timetable_id)}
-                        >
-                          Continue
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <DeleteDialog timetable={timetable} />
                 </div>
               </CardFooter>
             </Card>
