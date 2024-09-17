@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '~/server/db/index';
-import { timetables, classes } from '~/server/db/schema';
+import { timetables, classes, slots as slotsTable } from '~/server/db/schema';
 import { eq } from 'drizzle-orm';
-import type { Timetable, Class, Activity, Slot } from '~/server/db/types';
+import type { Timetable, Class } from '~/server/db/types';
 import { auth } from '@clerk/nextjs/server';
 
 export async function GET() {
@@ -24,13 +24,21 @@ export async function GET() {
             .from(classes)
             .where(eq(classes.user_id, userId));
 
+        const slots = await db
+            .select()
+            .from(slotsTable)
+            .where(eq(slotsTable.user_id, userId))
+
         // Format timetables
         const formattedTimetables: Timetable[] = fetchedTimetables.map(timetable => ({
             user_id: timetable.user_id,
             timetable_id: timetable.timetable_id,
-            days: JSON.parse(timetable.days as string) as Record<string, Activity[]>,
+            days: timetable.days,
             name: timetable.name,
-            slots: timetable.slots ? JSON.parse(timetable.slots as string) as Slot[] : null,
+            slots,
+            start_time: timetable.start_time,
+            end_time: timetable.end_time,
+            classes: [], // Add an empty classes array
         }));
 
         // Format classes
@@ -45,6 +53,9 @@ export async function GET() {
             day: cls.day ?? '',
             start: cls.start ?? '',
             end: cls.end ?? '',
+            color: cls.color ?? '#FFFFFF',
+            icon_name: cls.icon_name ?? '',
+            icon_prefix: cls.icon_prefix as "fas" | "far" ?? 'fas',
         }));
 
         // Combine timetables and classes

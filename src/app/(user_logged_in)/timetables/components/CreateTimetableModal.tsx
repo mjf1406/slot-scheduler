@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { z } from "zod";
+import * as z from "zod";
 import { Button } from "~/components/ui/button";
 import { Checkbox } from "~/components/ui/checkbox";
 import {
@@ -27,28 +27,48 @@ import {
 import { Input } from "~/components/ui/input";
 import { toast } from "~/components/ui/use-toast";
 import { createTimetable } from "../actions";
-import { formSchema } from '../form-schemas';
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { WEEKDAYS } from "~/lib/constants";
-import { useTimetables } from "../hooks";
+import { timeToMinutes } from "~/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { timetablesOptions } from "~/app/api/queryOptions";
+import type { Timetable } from "~/server/db/types";
+
+// Update the form schema to include start_time and end_time
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  days: z.array(z.string()).min(1, "Select at least one day"),
+  start_time: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+  end_time: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+});
 
 export function CreateTimetableModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { refetchTimetables } = useTimetables();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       days: [],
+      start_time: "09:00",
+      end_time: "17:00",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const result = await createTimetable(values);
+      const result = await createTimetable({
+        ...values,
+        start_time: Math.floor(timeToMinutes(values.start_time) / 60),
+        end_time: Math.floor(timeToMinutes(values.end_time) / 60),
+      });
       if (result.success) {
         toast({
           title: "Success",
@@ -56,15 +76,30 @@ export function CreateTimetableModal() {
         });
         form.reset();
         setIsOpen(false);
-        await refetchTimetables();
+
+        // Update the cache immediately
+        queryClient.setQueryData<Timetable[]>(
+          timetablesOptions.queryKey,
+          (oldData) => {
+            if (!oldData) {
+              return [result.timetable as unknown as Timetable];
+            }
+            return [...oldData, result.timetable as unknown as Timetable];
+          },
+        );
+
+        // Invalidate and refetch
+        await queryClient.invalidateQueries({
+          queryKey: timetablesOptions.queryKey,
+        });
       } else {
-        // Set an error on the name field
-        form.setError('name', { 
-          type: 'manual',
-          message: result.message
+        form.setError("name", {
+          type: "manual",
+          message: result.message,
         });
       }
     } catch (error) {
+      console.error(error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -78,16 +113,16 @@ export function CreateTimetableModal() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" onClick={() => setIsOpen(true)}>
-          Create Timetable
+        <Button variant="default" onClick={() => setIsOpen(true)}>
+          <Plus size={20} className="mr-2" /> Create Timetable
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Timetable</DialogTitle>
           <DialogDescription>
-            Enter a name for your timetable and select the days you want to
-            include.
+            Enter a name, select days, and set start and end times for your
+            timetable.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -153,15 +188,41 @@ export function CreateTimetableModal() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="start_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Start Time</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="end_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>End Time</FormLabel>
+                  <FormControl>
+                    <Input type="time" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                    <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        <span>Creating...</span>
-                    </>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <span>Creating...</span>
+                  </>
                 ) : (
-                    "Create Timetable"
+                  "Create Timetable"
                 )}
               </Button>
             </DialogFooter>

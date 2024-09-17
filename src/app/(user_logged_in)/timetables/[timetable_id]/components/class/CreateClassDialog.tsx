@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { timetablesOptions } from "~/app/api/queryOptions";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -22,23 +24,18 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import { createClass } from "../actions";
 import { toast } from "~/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
-import { useTimetables } from "../hooks";
+import { Loader2, Plus } from "lucide-react";
+import ColorPicker from "~/components/ShadcnColorPicker";
+import FAIconPicker from "~/components/FontAwesomeIconPicker";
+import { createClass } from "../../../actions";
+import type { IconName } from "@fortawesome/fontawesome-svg-core";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
-  default_day: z.string().optional(),
-  default_start: z.string().optional(),
-  default_end: z.string().optional(),
+  color: z.string(),
+  icon_name: z.string(),
+  icon_prefix: z.enum(["fas", "far"]),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
@@ -46,15 +43,16 @@ type FormSchema = z.infer<typeof formSchema>;
 export function CreateClassDialog({ timetableId }: { timetableId: string }) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { refetchTimetables } = useTimetables();
+  const queryClient = useQueryClient();
+  useSuspenseQuery(timetablesOptions);
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      default_day: "",
-      default_start: "",
-      default_end: "",
+      color: "#000000",
+      icon_name: "",
+      icon_prefix: "fas",
     },
   });
 
@@ -69,7 +67,9 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
         });
         setOpen(false);
         form.reset();
-        await refetchTimetables();
+        await queryClient.invalidateQueries({
+          queryKey: timetablesOptions.queryKey,
+        });
       } else {
         form.setError("name", {
           type: "manual",
@@ -90,7 +90,10 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Create Class</Button>
+        <Button>
+          <Plus size={20} className="mr-2" />
+          Create Class
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -98,6 +101,7 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            {/* Form fields remain unchanged */}
             <FormField
               control={form.control}
               name="name"
@@ -113,47 +117,15 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
             />
             <FormField
               control={form.control}
-              name="default_day"
+              name="color"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Default Day</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a day" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {[
-                        "Monday",
-                        "Tuesday",
-                        "Wednesday",
-                        "Thursday",
-                        "Friday",
-                        "Saturday",
-                        "Sunday",
-                      ].map((day) => (
-                        <SelectItem key={day} value={day}>
-                          {day}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="default_start"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Default Start Time</FormLabel>
+                  <FormLabel>Color</FormLabel>
                   <FormControl>
-                    <Input type="time" {...field} />
+                    <ColorPicker
+                      onSelectColor={field.onChange}
+                      selectedColor={field.value}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -161,12 +133,25 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
             />
             <FormField
               control={form.control}
-              name="default_end"
+              name="icon_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Default End Time</FormLabel>
+                  <FormLabel>Icon</FormLabel>
                   <FormControl>
-                    <Input type="time" {...field} />
+                    <FAIconPicker
+                      onSelectIcon={(iconName, prefix) => {
+                        field.onChange(iconName);
+                        form.setValue("icon_prefix", prefix as "fas" | "far");
+                      }}
+                      selectedIcon={
+                        field.value
+                          ? {
+                              name: field.value as IconName,
+                              prefix: form.getValues("icon_prefix"),
+                            }
+                          : undefined
+                      }
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

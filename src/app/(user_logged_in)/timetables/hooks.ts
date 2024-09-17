@@ -18,5 +18,11 @@ export const useTimetables = (initialData?: Timetable[]) => {
     return queryClient.invalidateQueries({ queryKey: ['timetables'] });
   };
 
-  return { ...query, refetchTimetables };
+  const prefetchTimetables = () => {
+    return queryClient.prefetchQuery({
+      queryKey: ['timetables'],
+      queryFn: fetchTimetables
+    })
+  }
+  return { ...query, refetchTimetables, prefetchTimetables };
 };

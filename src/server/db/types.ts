@@ -6,29 +6,37 @@ export type Activity = {
 };
   
 export type Slot = {
-    start_time: string,
-    end_time: string,
-    day: string,
+    user_id: string,
+    timetable_id: string,
+    slot_id: string;
+    day: string;
+    start_time: string;
+    end_time: string;
 }
 
 export type Timetable = {
     user_id: string;
     timetable_id: string;
-    days: Record<string, Activity[]>;
+    days: string[];
     name: string,
     slots: Slot[],
     classes: Class[],
+    start_time: number;
+    end_time: number;
 };
 
 export type Class = {
     user_id?: string,
     timetable_id?: string,
-    class_id?: string,
+    class_id: string,
     name: string,
-    default_day: string,
-    default_start: string,
-    default_end: string,
-    day: string,
-    start: string,
-    end: string,
-}
+    default_day?: string,
+    default_start?: string,
+    default_end?: string,
+    day?: string,
+    start?: string,
+    end?: string,
+    color: string,
+    icon_name: string,
+    icon_prefix: 'fas' | 'far',
+  };

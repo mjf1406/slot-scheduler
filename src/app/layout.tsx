@@ -4,6 +4,10 @@ import { poppins } from "./fonts";
 import { Toaster } from "~/components/ui/toaster";
 import { ThemeProvider } from "~/components/theme/theme-provider";
 import Providers from "./providers";
+import { config } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
+
+config.autoAddCss = false;
 
 export const metadata = {
   title: "Slotted",

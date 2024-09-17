@@ -35,6 +35,7 @@ const config = {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+          background: "hsl(var(--destructive-background))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",

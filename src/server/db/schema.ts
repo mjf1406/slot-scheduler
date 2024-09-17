@@ -1,4 +1,4 @@
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import type { Slot } from "./types";
 
@@ -19,17 +19,7 @@ export const users = sqliteTable('users',
   ('user_2hJQqqywkygYAjPEoAncvveceXL', 'Michael Fitzgerald', 'michael.fitzgerald.1406@gmail.com', 'admin');
 */
   
-export const timetables = sqliteTable('timetables',
-  {
-    user_id: text('user_id').notNull().references(() => users.user_id),
-    timetable_id: text('timetable_id').notNull().primaryKey(),
-    days: text('days', { mode: 'json' }).notNull(),
-    name: text('name').notNull(),
-    slots: text('slots', { mode: 'json' }).$type<Slot[]>()
-  }
-)
-
-export const classes = sqliteTable('classes',
+export const classes = sqliteTable('classes', 
   {
     user_id: text('user_id').notNull().references(() => users.user_id),
     timetable_id: text('timetable_id').notNull().references(() => timetables.timetable_id),
@@ -41,5 +31,46 @@ export const classes = sqliteTable('classes',
     day: text('day'),
     start: text('start'),
     end: text('end'),
+    color: text('color').notNull(),
+    icon_name: text('icon_name').notNull(),
+    icon_prefix: text('icon_prefix').notNull(),
+  }, 
+  (table) => {
+      return {
+          classes_by_user_id: index("classes_by_user_id").on(table.user_id)
+      }
+  }
+);
+
+export const timetables = sqliteTable('timetables',
+  {
+    user_id: text('user_id').notNull().references(() => users.user_id),
+    timetable_id: text('timetable_id').notNull().primaryKey(),
+    days: text('days', { mode: 'json' }).notNull().$type<string[]>(),
+    name: text('name').notNull(),
+    slots: text('slots', { mode: 'json' }).$type<Slot[]>().default([]),
+    start_time: integer('start_time', { mode: 'number' }).notNull(),
+    end_time: integer('end_time', { mode: 'number' }).notNull(),
+  }, 
+  (table) => {
+      return {
+          timetables_by_user_id: index("timetables_by_user_id").on(table.user_id)
+      }
+  }
+)
+
+export const slots = sqliteTable('slots', 
+  {
+    user_id: text('user_id').notNull().references(() => users.user_id),
+    timetable_id: text('timetable_id').notNull().references(() => timetables.timetable_id),
+    slot_id: text('slot_id').notNull().primaryKey(),
+    day: text('day').notNull(),
+    start_time: text('start_time').notNull(),
+    end_time: text('end_time').notNull(),
+  }, 
+  (table) => {
+      return {
+          slots_by_user_id: index("slots_by_user_id").on(table.user_id)
+      }
   }
 )

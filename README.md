@@ -4,31 +4,62 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 ## To-do List
 
-### p1
+### p2
 
 - backend: set up the webhook
   - Start up ngrok to use the route in `~/app/api/webhooks/route.ts`
   - Set up [Clerk Webhook](https://clerk.com/docs/integrations/webhooks/sync-data)
 - fixed: sidebar doesn't load on home page on mobile
-- UX: timetable
-  - edit mode
-    - [ ] the user to change their slots' times by dragging the ends and starts to different times
-    - [ ] can change slots' names
-    - [ ] add/remove days
-    - [ ] name
-    - [ ] when a class is put into a slot, it sets that as the default, so the next week, the class will be there automatically
+
+### p1
+
+- slots: added an edit button to created slots that prompts you to change all future slots, or just this one
+- UX: when adding a class, class applies to current timetable or selected timetables
 
 ### p0
 
-- UX: when adding a class, classes can have the the below changed
-  - [ ] background color
-  - [ ] icon & icon color
-  - [ ] class applies to current timetable or selected timetables
-- UX: can edit a class: icon, color, name, timetable
-- UX: can delete a class: from current timetable only, or from all
-- UX: removed default day, start time, and end time from Create New Class
+- backend: when dragging a class to a slot, DO SOMETHING IN BACKEND -- needs thinking, hard
+- UX: when dragging a class to a slot, the class needs to be over the slot with some padding
+- UI: added a today button to make the calendar go to the week that has today in it
+- UX: can edit a timetable
+- UX: can delete a timetable
 
 ## Change Log
+
+2024/09/17
+
+- fixed font color for classes to render based on their bg color for best contrast
+- slots: added a button to quickly cut the duration in half, while maintaining the same start time in the edit dialog
+- slots: added a button to quickly double the duration while maintaining the same start time in the edit dialog
+- UI: new timetables appear properly in the UI upon creation
+- backend: created slots are saved to the db
+- backend: user can now delete slots in UI and db
+- UI: on mobile, implement a day carousel so that only 2 days are shown at a time.
+- UX: let the user toggle between the DayCarousel and a VERY small, WeekView
+- fixed: mobile main padding and margins are now a decent size to ensure the week view as the most room as possible.
+- backend: added start and end times when creating a new timetable
+
+2024/09/16
+
+- UI: rebuilt the `timetable/timetable_id` page
+- UX: removed default day, start time, and end time from Create New Class
+- UX: user can create a slot
+- backend: suspenseQuery is now used
+- routing: a list of timetables is now displayed on `/timetables`
+- routing: use clicks on a timetable in the above and is routed to `/timetables/timetable_id`
+- UX: added a bunch of icons for the seven main classes: grammar, social, reading, vocab, science, math, writing, exam
+
+2024/09/04
+
+- added basic dates to the timetable view
+- UX: can delete a class from current timetable only
+- UX: can edit a class: icon, color, name, timetable
+- added loading state to the get started/timetables button on the home page
+- added color and icon to class
+
+2024/09/03
+
+- created color picker and icon picker components
 
 2024/09/01
 

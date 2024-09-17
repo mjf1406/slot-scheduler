@@ -1,13 +1,9 @@
-import type { Class, Timetable } from "~/server/db/types";
+import type { Timetable } from "~/server/db/types";
 
-export interface TimetableWithClasses extends Timetable {
-  classes: Class[];
-}
-
-export const fetchTimetables = async (): Promise<TimetableWithClasses[]> => {
+export const fetchTimetables = async (): Promise<Timetable[]> => {
   const response = await fetch('/api/getTimetables');
   if (!response.ok) {
     throw new Error('Network response was not ok');
   }
-  return await response.json() as TimetableWithClasses[];
+  return await response.json() as Timetable[];
 };

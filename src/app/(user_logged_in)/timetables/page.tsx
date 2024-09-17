@@ -1,5 +1,10 @@
-import { Suspense } from 'react';
+import { Suspense } from "react";
 import Link from "next/link";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { ContentLayout } from "~/components/admin-panel/content-layout";
 import {
   Breadcrumb,
@@ -9,27 +14,34 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "~/components/ui/breadcrumb";
-import Timetables from './components/TimetableClient';
+import TimetablesClient from "./components/TimetablesClient";
+import { timetablesOptions } from "~/app/api/queryOptions";
+import LoadingPage from "~/components/Loading";
 
-export default function MyTimetablesPage() {
+export default async function MyTimetablesPage() {
+  const queryClient = new QueryClient();
+  await queryClient.prefetchQuery(timetablesOptions);
+
   return (
-    <ContentLayout title="Timetables">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/">Home</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Timetables</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-        <Suspense fallback={<></>}>
-          <Timetables />
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ContentLayout title="Timetables">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/">Home</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Timetables</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <Suspense fallback={<LoadingPage />}>
+          <TimetablesClient />
         </Suspense>
-    </ContentLayout>
+      </ContentLayout>
+    </HydrationBoundary>
   );
 }

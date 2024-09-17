@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { ContentLayout } from "~/components/admin-panel/content-layout";
 import FrequentlyAskedQuestions from "~/components/brand/FAQ";
+import LoadingButton from "~/components/LoadingButton";
 import { Button } from "~/components/ui/button";
 
 export default function HomePage() {
@@ -25,20 +26,16 @@ export default function HomePage() {
           </div>
           <div className="space-x-4">
             <SignedOut>
-              <Button asChild>
-                <Link href={"/timetables"}>
-                  Get Started{" "}
-                  <ArrowRight className="ml-0.5 inline-block h-5 w-5" />
-                </Link>
-              </Button>
+              <LoadingButton href="/timetables">
+                Get Started{" "}
+                <ArrowRight className="ml-0.5 inline-block h-5 w-5" />
+              </LoadingButton>
             </SignedOut>
             <SignedIn>
-              <Button asChild>
-                <Link href={"/timetables"}>
-                  Timetables{" "}
-                  <ArrowRight className="ml-0.5 inline-block h-5 w-5" />
-                </Link>
-              </Button>
+              <LoadingButton href="/timetables">
+                Timetables{" "}
+                <ArrowRight className="ml-0.5 inline-block h-5 w-5" />
+              </LoadingButton>
             </SignedIn>
             <Button asChild variant={"secondary"}>
               <Link href={"#features"}>Learn more</Link>
