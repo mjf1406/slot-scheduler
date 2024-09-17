@@ -1,3 +1,5 @@
+// src/app/api/getTimetables
+
 import { NextResponse } from 'next/server';
 import { db } from '~/server/db/index';
 import { timetables, classes, slots as slotsTable } from '~/server/db/schema';

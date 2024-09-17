@@ -1,5 +1,3 @@
-"use client";
-
 import { ModeToggle } from "~/components/mode-toggle";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { Button } from "../ui/button";
@@ -7,29 +5,13 @@ import Link from "next/link";
 import { cn } from "~/lib/utils";
 import Logo from "../brand/Logo";
 import { APP_NAME } from "~/lib/constants";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from "../ui/breadcrumb";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { timetablesOptions } from "~/app/api/queryOptions";
-import { useParams } from "next/navigation";
+import { NavbarContentWrapper } from "./NavbarWrapper";
 
 interface NavbarProps {
   title: string;
 }
 
 export function Navbar({ title }: NavbarProps) {
-  const params = useParams();
-  const timetableId = params.timetable_id as string;
-  const { data: timetables } = useSuspenseQuery(timetablesOptions);
-  const selectedTimetable = timetables?.find(
-    (t) => t.timetable_id === timetableId,
-  );
   return (
     <header className="sticky top-0 z-10 w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-secondary">
       <div className="mx-4 flex h-14 items-center sm:mx-8">
@@ -55,33 +37,7 @@ export function Navbar({ title }: NavbarProps) {
               </div>
             </Link>
           </Button>
-          <Breadcrumb>
-            <BreadcrumbList className="-ml-6 md:-ml-2">
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link
-                    href="/timetables"
-                    className="text-lg font-semibold hover:underline"
-                  >
-                    Timetables
-                  </Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              {selectedTimetable ? (
-                <>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="text-lg font-semibold">
-                      {selectedTimetable.name}
-                    </BreadcrumbPage>
-                  </BreadcrumbItem>
-                </>
-              ) : (
-                <></>
-              )}
-            </BreadcrumbList>
-          </Breadcrumb>
+          <NavbarContentWrapper />
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <div className="grid grid-cols-2 gap-2">
@@ -89,14 +45,16 @@ export function Navbar({ title }: NavbarProps) {
               <ModeToggle />
             </div>
             <div className="col-span-1 flex items-center justify-end">
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-              <SignedOut>
-                <Button asChild>
-                  <Link href="/auth/sign-in">Sign in</Link>
-                </Button>
-              </SignedOut>
+              <>
+                <SignedIn>
+                  <UserButton />
+                </SignedIn>
+                <SignedOut>
+                  <Button asChild>
+                    <Link href="/auth/sign-in">Sign in</Link>
+                  </Button>
+                </SignedOut>
+              </>
             </div>
           </div>
         </div>
