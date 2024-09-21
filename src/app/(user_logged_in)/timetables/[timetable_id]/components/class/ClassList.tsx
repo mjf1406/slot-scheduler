@@ -1,6 +1,8 @@
-import React from "react";
+// components/class/ClassList.tsx
+import React, { useEffect, useState } from "react";
 import ClassItem from "./ClassItem";
 import type { Class } from "~/server/db/types";
+import { DndContext, type DragEndEvent, rectIntersection } from "@dnd-kit/core";
 
 interface ClassListProps {
   classes: Class[];
@@ -15,45 +17,59 @@ const ClassList: React.FC<ClassListProps> = ({
   onDelete,
   timetableId,
 }) => {
-  const assignedClasses = classes.filter((cls) => cls.day !== "");
-  const unassignedClasses = classes.filter((cls) => cls.day === "");
+  // Manage the state of class items
+  const [classItems, setClassItems] = useState<Class[]>(classes);
+
+  // Update state when classes prop changes
+  useEffect(() => {
+    setClassItems(classes);
+  }, [classes]);
+
+  // Handle the drag end event to reorder items
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    if (active.id !== over.id) {
+      setClassItems((items) => {
+        const oldIndex = items.findIndex((item) => item.class_id === active.id);
+        const newIndex = items.findIndex((item) => item.class_id === over.id);
+
+        const newItems = [...items];
+        const [movedItem] = newItems.splice(oldIndex, 1);
+        if (movedItem) newItems.splice(newIndex, 0, movedItem);
+
+        return newItems;
+      });
+    }
+  };
 
   return (
-    // <div className="mt-5 grid grid-cols-2 gap-5 rounded-lg bg-foreground/5 p-3">
     <div className="mt-5 flex flex-col gap-5 rounded-lg bg-foreground/5 p-3">
-      {/* <div className="col-span-1"> */}
       <div className="w-full">
         <h3 className="mb-2 text-center text-lg font-medium">
           Unassigned Classes
         </h3>
-        <div className="m-auto flex w-full flex-col gap-1">
-          {unassignedClasses.map((cls) => (
-            <ClassItem
-              key={cls.class_id}
-              classData={cls}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              timetableId={timetableId}
-            />
-          ))}
-        </div>
+        {/* Wrap the list in DndContext */}
+        <DndContext
+          collisionDetection={rectIntersection}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="m-auto flex w-full flex-col gap-1">
+            {classItems.map(
+              (cls) =>
+                cls && (
+                  <ClassItem
+                    key={cls.class_id}
+                    classData={cls}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    timetableId={timetableId}
+                  />
+                ),
+            )}
+          </div>
+        </DndContext>
       </div>
-      {/* <div className="col-span-1">
-        <h3 className="mb-2 text-center text-lg font-medium">
-          Assigned Classes
-        </h3>
-        <div className="m-auto flex w-full flex-col gap-1">
-          {assignedClasses.map((cls) => (
-            <ClassItem
-              key={cls.class_id}
-              classData={cls}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              timetableId={timetableId}
-            />
-          ))}
-        </div>
-      </div> */}
     </div>
   );
 };

@@ -15,6 +15,7 @@ import { deleteClass, editClass } from "../actions";
 import DayCarousel from "./components/DayCarousel";
 import { Button } from "~/components/ui/button";
 import { createSlot, deleteSlot, updateSlot } from "./actions";
+import { DndContext } from "@dnd-kit/core";
 
 export default function TimetablePage() {
   const params = useParams();
@@ -158,63 +159,69 @@ export default function TimetablePage() {
   return (
     <ContentLayout title="Timetables">
       <Suspense fallback={<LoadingPage />}>
-        <div className="container px-0">
-          <div id="timetable" className="mt-5">
-            <div className="flex gap-5">
-              <h1 className="mb-2 text-3xl font-bold">
-                {selectedTimetable.name}
-              </h1>
-              <CreateClassDialog timetableId={selectedTimetable.timetable_id} />
-              <CreateSlotDialog
-                days={selectedTimetable.days}
-                onCreateSlot={handleCreateSlot}
-              />
-            </div>
-          </div>
-          <div className="flex grid-cols-4 flex-col gap-5 xl:grid">
-            <div className="col-span-1">
-              <ClassList
-                classes={selectedTimetable.classes}
-                onEdit={handleEditClass}
-                onDelete={handleDeleteClass}
-                timetableId={selectedTimetable.timetable_id}
-              />
-            </div>
-            <div className="col-span-3">
-              <div className="mb-4 flex justify-end">
-                <Button
-                  onClick={() => setShowWeekView(!showWeekView)}
-                  variant="outline"
-                >
-                  {showWeekView ? "Switch to Day View" : "Switch to Week View"}
-                </Button>
+        <DndContext>
+          <div className="container px-0">
+            <div id="timetable" className="mt-5">
+              <div className="flex gap-5">
+                <h1 className="mb-2 text-3xl font-bold">
+                  {selectedTimetable.name}
+                </h1>
+                <CreateClassDialog
+                  timetableId={selectedTimetable.timetable_id}
+                />
+                <CreateSlotDialog
+                  days={selectedTimetable.days}
+                  onCreateSlot={handleCreateSlot}
+                />
               </div>
-              {showWeekView ? (
-                <WeekView
-                  start_time={selectedTimetable.start_time}
-                  end_time={selectedTimetable.end_time}
-                  days={selectedTimetable.days}
-                  timeSlots={timeSlots}
+            </div>
+            <div className="flex grid-cols-4 flex-col gap-5 xl:grid">
+              <div className="col-span-1">
+                <ClassList
                   classes={selectedTimetable.classes}
-                  onDeleteSlot={handleDeleteSlot}
-                  onCreateSlot={handleCreateSlot}
-                  onEditSlot={handleEditSlot}
+                  onEdit={handleEditClass}
+                  onDelete={handleDeleteClass}
+                  timetableId={selectedTimetable.timetable_id}
                 />
-              ) : (
-                <DayCarousel
-                  start_time={selectedTimetable.start_time}
-                  end_time={selectedTimetable.end_time}
-                  days={selectedTimetable.days}
-                  timeSlots={timeSlots}
-                  classes={selectedTimetable.classes}
-                  onDeleteSlot={handleDeleteSlot}
-                  onCreateSlot={handleCreateSlot}
-                  onEditSlot={handleEditSlot}
-                />
-              )}
+              </div>
+              <div className="col-span-3">
+                <div className="mb-4 flex justify-end">
+                  <Button
+                    onClick={() => setShowWeekView(!showWeekView)}
+                    variant="outline"
+                  >
+                    {showWeekView
+                      ? "Switch to Day View"
+                      : "Switch to Week View"}
+                  </Button>
+                </div>
+                {showWeekView ? (
+                  <WeekView
+                    start_time={selectedTimetable.start_time}
+                    end_time={selectedTimetable.end_time}
+                    days={selectedTimetable.days}
+                    timeSlots={timeSlots}
+                    classes={selectedTimetable.classes}
+                    onDeleteSlot={handleDeleteSlot}
+                    onCreateSlot={handleCreateSlot}
+                    onEditSlot={handleEditSlot}
+                  />
+                ) : (
+                  <DayCarousel
+                    start_time={selectedTimetable.start_time}
+                    end_time={selectedTimetable.end_time}
+                    days={selectedTimetable.days}
+                    timeSlots={timeSlots}
+                    classes={selectedTimetable.classes}
+                    onDeleteSlot={handleDeleteSlot}
+                    onCreateSlot={handleCreateSlot}
+                    onEditSlot={handleEditSlot}
+                  />
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </DndContext>
       </Suspense>
     </ContentLayout>
   );

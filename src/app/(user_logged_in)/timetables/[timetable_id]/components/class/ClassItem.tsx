@@ -1,4 +1,7 @@
+// components/class/ClassItem.tsx
 import React, { useState, useMemo } from "react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { Edit, Grip, MoreVertical, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
@@ -27,6 +30,33 @@ const ClassItem: React.FC<ClassItemProps> = ({
   onEdit,
   onDelete,
 }) => {
+  // Initialize useDraggable and useDroppable
+  const { isOver, setNodeRef: setDroppableNodeRef } = useDroppable({
+    id: classData.class_id,
+  });
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDraggableNodeRef,
+    transform,
+    // transition,
+  } = useDraggable({
+    id: classData.class_id,
+  });
+
+  // Combine refs
+  const setNodeRef = (element: HTMLElement | null) => {
+    setDroppableNodeRef(element);
+    setDraggableNodeRef(element);
+  };
+
+  // Style adjustments during drag
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    // transition,
+    opacity: isOver ? 0.5 : 1,
+  };
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { theme } = useTheme();
@@ -53,11 +83,18 @@ const ClassItem: React.FC<ClassItemProps> = ({
   return (
     <>
       <div
-        style={{ backgroundColor: classData.color || "#ffffff" }}
+        ref={setNodeRef}
+        style={{ ...style, backgroundColor: classData.color || "#ffffff" }}
         className={`flex w-full items-center justify-between rounded p-0.5 shadow-sm transition-shadow duration-200 hover:shadow-md ${textColorClass}`}
       >
         <div className="flex items-center justify-start gap-2">
-          <Grip size={20} className="cursor-move" />
+          {/* Attach listeners to the drag handle */}
+          <Grip
+            size={20}
+            className="cursor-move"
+            {...listeners}
+            {...attributes}
+          />
           {classData.icon_name ? (
             <FontAwesomeIcon
               icon={[classData.icon_prefix, classData.icon_name as IconName]}
