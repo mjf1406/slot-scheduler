@@ -13,11 +13,17 @@ type CalendarCarouselProps = {
   end_time: number; // 0-23
   days: string[];
   timeSlots: Slot[];
-  classes: Class[];
+  classes: ExtendedClass[];
   onDeleteSlot: (id: string) => void;
   onCreateSlot: (slot: Omit<Slot, "id">) => void;
   onEditSlot: (slot: Slot, editFuture: boolean) => void;
+  onEditClass: (updatedClass: Class) => Promise<void>;
+  onDeleteClass: (id: string) => Promise<void>;
 };
+
+interface ExtendedClass extends Class {
+  slot_id?: string;
+}
 
 export default function DayCarousel({
   start_time = 9,
@@ -28,6 +34,8 @@ export default function DayCarousel({
   onDeleteSlot,
   onCreateSlot,
   onEditSlot,
+  onEditClass,
+  onDeleteClass,
 }: CalendarCarouselProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const now = new Date();
@@ -209,11 +217,16 @@ export default function DayCarousel({
                   <TimeSlot
                     key={slot.slot_id}
                     slot={slot}
+                    classes={classes.filter(
+                      (cls) => cls.slot_id === slot.slot_id,
+                    )}
                     onDeleteSlot={onDeleteSlot}
                     getSlotStyle={getSlotStyle}
                     onEditSlot={(updatedSlot) => onEditSlot(updatedSlot, false)}
                     calculateDuration={calculateDuration}
                     timetableDays={days}
+                    onEditClass={onEditClass}
+                    onDeleteClass={onDeleteClass}
                   />
                 ))}
             </div>

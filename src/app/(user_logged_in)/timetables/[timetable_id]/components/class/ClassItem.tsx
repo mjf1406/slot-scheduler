@@ -23,25 +23,37 @@ interface ClassItemProps {
   onEdit: (updatedClass: Class) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   timetableId: string;
+  size?: "small" | "normal";
+  isDragging?: boolean;
 }
 
 const ClassItem: React.FC<ClassItemProps> = ({
   classData,
   onEdit,
   onDelete,
+  size = "normal",
+  isDragging = false,
 }) => {
   // Initialize useDraggable and useDroppable
   const { isOver, setNodeRef: setDroppableNodeRef } = useDroppable({
     id: classData.class_id,
+    data: {
+      type: "ClassItem",
+      class: classData,
+    },
   });
+
   const {
     attributes,
     listeners,
     setNodeRef: setDraggableNodeRef,
     transform,
-    // transition,
   } = useDraggable({
     id: classData.class_id,
+    data: {
+      type: "ClassItem",
+      class: classData,
+    },
   });
 
   // Combine refs
@@ -54,7 +66,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   const style = {
     transform: CSS.Translate.toString(transform),
     // transition,
-    opacity: isOver ? 0.5 : 1,
+    opacity: (isOver ?? isDragging) ? 0.5 : 1,
   };
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -80,17 +92,33 @@ const ClassItem: React.FC<ClassItemProps> = ({
     setIsDeleteDialogOpen(false);
   };
 
+  const sizeClasses = useMemo(() => {
+    if (size === "small") {
+      return {
+        container: "p-0",
+        icon: "h-4 w-4",
+        text: "text-xs",
+        button: "p-0",
+      };
+    }
+    return {
+      container: "p-1",
+      icon: "h-6 w-6",
+      text: "text-sm",
+      button: "p-1",
+    };
+  }, [size]);
+
   return (
     <>
       <div
         ref={setNodeRef}
         style={{ ...style, backgroundColor: classData.color || "#ffffff" }}
-        className={`flex w-full touch-none items-center justify-between rounded p-0.5 shadow-sm transition-shadow duration-200 hover:shadow-md ${textColorClass}`}
+        className={`flex w-full touch-none items-center justify-between rounded shadow-sm transition-shadow duration-200 hover:shadow-md ${textColorClass} ${sizeClasses.container}`}
       >
-        <div className="flex items-center justify-start gap-2">
-          {/* Attach listeners to the drag handle */}
+        <div className="flex items-center justify-start gap-1">
           <Grip
-            size={20}
+            size={size === "small" ? 16 : 20}
             className="cursor-move"
             {...listeners}
             {...attributes}
@@ -98,17 +126,26 @@ const ClassItem: React.FC<ClassItemProps> = ({
           {classData.icon_name ? (
             <FontAwesomeIcon
               icon={[classData.icon_prefix, classData.icon_name as IconName]}
-              className="h-6 w-6"
+              className={sizeClasses.icon}
             />
           ) : (
-            <FontAwesomeIcon icon="circle-question" className="h-6 w-6" />
+            <FontAwesomeIcon
+              icon="circle-question"
+              className={sizeClasses.icon}
+            />
           )}
-          <span className="truncate text-sm font-medium">{classData.name}</span>
+          <span className={`truncate font-medium ${sizeClasses.text}`}>
+            {classData.name}
+          </span>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className={textColorClass}>
-              <MoreVertical size={16} />
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`${textColorClass} ${sizeClasses.button}`}
+            >
+              <MoreVertical size={size === "small" ? 14 : 16} />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>

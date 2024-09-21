@@ -7,16 +7,23 @@ import { calculateDuration } from "~/lib/utils";
 import type { Slot, Class } from "~/server/db/types";
 import { TimeSlot } from "./slot/TimeSlot";
 import { HOUR_SIZE_PIXELS } from "~/lib/constants";
+import ClassItem from "./class/ClassItem";
+
+interface ExtendedClass extends Class {
+  slot_id?: string;
+}
 
 type CalendarProps = {
   start_time: number;
   end_time: number;
   days: string[];
   timeSlots: Slot[];
-  classes: Class[];
+  classes: ExtendedClass[];
   onDeleteSlot: (id: string) => void;
   onCreateSlot: (slot: Omit<Slot, "id">) => void;
   onEditSlot: (slot: Slot, editFuture: boolean) => void;
+  onEditClass: (updatedClass: Class) => Promise<void>;
+  onDeleteClass: (id: string) => Promise<void>;
 };
 
 export default function WeekView({
@@ -28,6 +35,8 @@ export default function WeekView({
   onDeleteSlot,
   onCreateSlot,
   onEditSlot,
+  onEditClass,
+  onDeleteClass,
 }: CalendarProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const now = new Date();
@@ -36,6 +45,25 @@ export default function WeekView({
       now.setDate(now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)),
     );
   });
+
+  const renderClassInSlot = (slot: Slot, classItem: Class) => {
+    return (
+      <div
+        key={classItem.class_id}
+        className="absolute left-0 right-0 overflow-hidden rounded"
+        style={getSlotStyle(slot)}
+      >
+        <div className="mt-5 flex h-full flex-col">
+          <ClassItem
+            classData={classItem}
+            onEdit={onEditClass}
+            onDelete={onDeleteClass}
+            timetableId={slot.timetable_id}
+          />
+        </div>
+      </div>
+    );
+  };
 
   const goToPreviousWeek = () => {
     setCurrentWeekStart((prevDate) => {
@@ -181,11 +209,16 @@ export default function WeekView({
                   <TimeSlot
                     key={slot.slot_id}
                     slot={slot}
+                    classes={classes.filter(
+                      (cls) => cls.slot_id === slot.slot_id,
+                    )}
                     onDeleteSlot={onDeleteSlot}
                     getSlotStyle={getSlotStyle}
                     onEditSlot={(updatedSlot) => onEditSlot(updatedSlot, false)}
                     calculateDuration={calculateDuration}
                     timetableDays={days}
+                    onEditClass={onEditClass}
+                    onDeleteClass={onDeleteClass}
                   />
                 ))}
             </div>
