@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "~/components/ui/button";
@@ -20,21 +20,15 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import { Input } from "~/components/ui/input";
+import { Checkbox } from "~/components/ui/checkbox";
 import { Plus } from "lucide-react";
 import { useToast } from "~/components/ui/use-toast";
 import type { Slot } from "~/server/db/types";
 
 const slotSchema = z
   .object({
-    day: z.string(),
+    days: z.array(z.string()).min(1, "Select at least one day"),
     start_time: z
       .string()
       .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format"),
@@ -66,30 +60,32 @@ export function CreateSlotDialog({
   const form = useForm<SlotFormValues>({
     resolver: zodResolver(slotSchema),
     defaultValues: {
-      day: days[0],
+      days: [],
       start_time: "09:00",
       end_time: "10:00",
     },
   });
 
-  const handleCreateSlot = async (
-    values: Omit<Slot, "slot_id" | "user_id" | "timetable_id">,
-  ) => {
+  const handleCreateSlot = async (values: SlotFormValues) => {
     try {
-      // Note: We're not adding user_id and timetable_id here.
-      // The parent component (handleCreateSlot function) will add these.
-      await onCreateSlot(values);
+      for (const day of values.days) {
+        await onCreateSlot({
+          day,
+          start_time: values.start_time,
+          end_time: values.end_time,
+        });
+      }
       setOpen(false);
       form.reset();
       toast({
         title: "Success",
-        description: "Slot created successfully",
+        description: "Slots created successfully",
       });
     } catch (error) {
-      console.error("Error creating slot:", error);
+      console.error("Error creating slots:", error);
       toast({
         title: "Error",
-        description: "Failed to create slot",
+        description: "Failed to create slots",
         variant: "destructive",
       });
     }
@@ -105,7 +101,7 @@ export function CreateSlotDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Create New Slot</DialogTitle>
+          <DialogTitle>Create New Slot(s)</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -114,27 +110,45 @@ export function CreateSlotDialog({
           >
             <FormField
               control={form.control}
-              name="day"
-              render={({ field }) => (
+              name="days"
+              render={() => (
                 <FormItem>
-                  <FormLabel>Day</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a day" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {days.map((day) => (
-                        <SelectItem key={day} value={day}>
-                          {day}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Days</FormLabel>
+                  <div className="flex flex-wrap gap-2">
+                    {days.map((day) => (
+                      <FormField
+                        key={day}
+                        control={form.control}
+                        name="days"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={day}
+                              className="flex w-full flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(day)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, day])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== day,
+                                          ),
+                                        );
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {day}
+                              </FormLabel>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -166,7 +180,7 @@ export function CreateSlotDialog({
               )}
             />
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "Creating..." : "Create Slot"}
+              {form.formState.isSubmitting ? "Creating..." : "Create Slot(s)"}
             </Button>
           </form>
         </Form>

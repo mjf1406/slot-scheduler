@@ -27,6 +27,7 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 - UI: moved the timeslot buttons to an action menu
 - UX: classes in unassigned classes are now draggable to any order
+- UX: when creating a slot, user can select as many days as they want
 
 2024/09/17
 
@@ -89,12 +90,19 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 - Colors from [RealtimeColors](https://www.realtimecolors.com/?colors=def2e7-050e09-89ddb0-1f824d-2bd579&fonts=Poppins-Poppins)
 - UI components from [Shadcn/ui](https://ui.shadcn.com/)
 
-using dnd-kit, implement drag and drop into the below components using useDroppable and useDraggable in the following way.
+## Stuff
 
-1.) users should be able to move the ClassItems within ClassList into any order they want
-2.) user should be able to move a ClassItem from the ClassList into a TimeSlot and have it display within the timeslot once dropped.
-3.) users should be able to drag and drop a classitem from a timeslot back into the classlist in any position that they want.
+### Step 1
 
 using dnd-kit, implement drag and drop into the below components using useDroppable and useDraggable in the following way. Prepare for a future where users can also move classitem to timeslot and back, but do not implement it. only implement the below.
 
 1.) users should be able to move the ClassItems within ClassList into any order they want
+
+### Step 2
+
+using dnd-kit, implement drag and drop into the below components using useDroppable and useDraggable in the following way.
+
+1.) user should be able to move a ClassItem from the ClassList into a TimeSlot and have it display within the timeslot once dropped.
+2.) users should be able to drag and drop a classitem from a timeslot back into the classlist in any position that they want.
+
+if a component has changes, ensure you output all code for that component so i can easily copy-paste it
