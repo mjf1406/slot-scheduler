@@ -85,7 +85,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
       <div
         ref={setNodeRef}
         style={{ ...style, backgroundColor: classData.color || "#ffffff" }}
-        className={`flex w-full items-center justify-between rounded p-0.5 shadow-sm transition-shadow duration-200 hover:shadow-md ${textColorClass}`}
+        className={`flex w-full touch-none items-center justify-between rounded p-0.5 shadow-sm transition-shadow duration-200 hover:shadow-md ${textColorClass}`}
       >
         <div className="flex items-center justify-start gap-2">
           {/* Attach listeners to the drag handle */}

@@ -2,7 +2,16 @@
 import React, { useEffect, useState } from "react";
 import ClassItem from "./ClassItem";
 import type { Class } from "~/server/db/types";
-import { DndContext, type DragEndEvent, rectIntersection } from "@dnd-kit/core";
+import {
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  rectIntersection,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 
 interface ClassListProps {
   classes: Class[];
@@ -19,7 +28,7 @@ const ClassList: React.FC<ClassListProps> = ({
 }) => {
   // Manage the state of class items
   const [classItems, setClassItems] = useState<Class[]>(classes);
-
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor));
   // Update state when classes prop changes
   useEffect(() => {
     setClassItems(classes);
@@ -49,10 +58,11 @@ const ClassList: React.FC<ClassListProps> = ({
         <h3 className="mb-2 text-center text-lg font-medium">
           Unassigned Classes
         </h3>
-        {/* Wrap the list in DndContext */}
         <DndContext
           collisionDetection={rectIntersection}
           onDragEnd={handleDragEnd}
+          modifiers={[restrictToWindowEdges]}
+          sensors={sensors}
         >
           <div className="m-auto flex w-full flex-col gap-1">
             {classItems.map(

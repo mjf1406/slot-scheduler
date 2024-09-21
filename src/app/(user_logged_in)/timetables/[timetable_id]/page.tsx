@@ -15,25 +15,28 @@ import { deleteClass, editClass } from "../actions";
 import DayCarousel from "./components/DayCarousel";
 import { Button } from "~/components/ui/button";
 import { createSlot, deleteSlot, updateSlot } from "./actions";
-import { DndContext } from "@dnd-kit/core";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 
 export default function TimetablePage() {
   const params = useParams();
   const timetableId = params.timetable_id as string;
-
   const queryClient = useQueryClient();
   const { data: timetables } = useSuspenseQuery(timetablesOptions);
-
   const selectedTimetable = timetables?.find(
     (t) => t.timetable_id === timetableId,
   );
-
   const [timeSlots, setTimeSlots] = useState<Slot[]>(
     selectedTimetable?.slots ?? [],
   );
-
   const [showWeekView, setShowWeekView] = useState(true);
-
+  const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor));
   const handleDeleteSlot = async (slot_id: string) => {
     try {
       const response = await deleteSlot(slot_id);
@@ -159,7 +162,7 @@ export default function TimetablePage() {
   return (
     <ContentLayout title="Timetables">
       <Suspense fallback={<LoadingPage />}>
-        <DndContext>
+        <DndContext sensors={sensors} modifiers={[restrictToWindowEdges]}>
           <div className="container px-0">
             <div id="timetable" className="mt-5">
               <div className="flex gap-5">
@@ -195,29 +198,34 @@ export default function TimetablePage() {
                       : "Switch to Week View"}
                   </Button>
                 </div>
-                {showWeekView ? (
-                  <WeekView
-                    start_time={selectedTimetable.start_time}
-                    end_time={selectedTimetable.end_time}
-                    days={selectedTimetable.days}
-                    timeSlots={timeSlots}
-                    classes={selectedTimetable.classes}
-                    onDeleteSlot={handleDeleteSlot}
-                    onCreateSlot={handleCreateSlot}
-                    onEditSlot={handleEditSlot}
-                  />
-                ) : (
-                  <DayCarousel
-                    start_time={selectedTimetable.start_time}
-                    end_time={selectedTimetable.end_time}
-                    days={selectedTimetable.days}
-                    timeSlots={timeSlots}
-                    classes={selectedTimetable.classes}
-                    onDeleteSlot={handleDeleteSlot}
-                    onCreateSlot={handleCreateSlot}
-                    onEditSlot={handleEditSlot}
-                  />
-                )}
+                <DndContext
+                  sensors={sensors}
+                  modifiers={[restrictToWindowEdges]}
+                >
+                  {showWeekView ? (
+                    <WeekView
+                      start_time={selectedTimetable.start_time}
+                      end_time={selectedTimetable.end_time}
+                      days={selectedTimetable.days}
+                      timeSlots={timeSlots}
+                      classes={selectedTimetable.classes}
+                      onDeleteSlot={handleDeleteSlot}
+                      onCreateSlot={handleCreateSlot}
+                      onEditSlot={handleEditSlot}
+                    />
+                  ) : (
+                    <DayCarousel
+                      start_time={selectedTimetable.start_time}
+                      end_time={selectedTimetable.end_time}
+                      days={selectedTimetable.days}
+                      timeSlots={timeSlots}
+                      classes={selectedTimetable.classes}
+                      onDeleteSlot={handleDeleteSlot}
+                      onCreateSlot={handleCreateSlot}
+                      onEditSlot={handleEditSlot}
+                    />
+                  )}
+                </DndContext>
               </div>
             </div>
           </div>

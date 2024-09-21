@@ -44,7 +44,10 @@ export const ActionDropdown: React.FC<ActionDropdownProps> = ({
         </DropdownMenuItem>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+            <DropdownMenuItem
+              className="text-destructive"
+              onSelect={(e) => e.preventDefault()}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </DropdownMenuItem>
@@ -59,7 +62,12 @@ export const ActionDropdown: React.FC<ActionDropdownProps> = ({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={onDelete}>Delete</AlertDialogAction>
+              <AlertDialogAction
+                onClick={onDelete}
+                className="bg-destructive text-foreground"
+              >
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
