@@ -124,11 +124,7 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
           </div>
           <ScrollArea className="flex-grow">
             <div className="p-6">
-              <Card>
-                <CardContent>
-                  <div className="class-content">{processedText}</div>
-                </CardContent>
-              </Card>
+              <div className="class-content">{processedText}</div>
             </div>
           </ScrollArea>
         </div>

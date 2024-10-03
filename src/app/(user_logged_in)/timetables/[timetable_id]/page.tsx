@@ -513,7 +513,7 @@ export default function TimetablePage() {
               </div>
             </div>
             <div className="flex grid-cols-4 flex-col gap-5 xl:grid">
-              <div className="col-span-1">
+              <div className="col-span-1 w-full">
                 <ClassList
                   classes={unassignedClassesForCurrentWeek}
                   onEdit={handleEditClass}
