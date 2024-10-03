@@ -19,8 +19,8 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import ColorPicker from "~/components/ShadcnColorPicker";
-import FAIconPicker from "~/components/FontAwesomeIconPicker";
+import ColorPicker from "~/components/popover-pickers/ShadcnColorPicker";
+import FAIconPicker from "~/components/popover-pickers/FontAwesomeIconPicker";
 import LoadingButton from "~/components/LoadingButton";
 import type { Class } from "~/server/db/types";
 import type { IconName } from "@fortawesome/fontawesome-svg-core";

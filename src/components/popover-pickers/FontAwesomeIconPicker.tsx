@@ -11,12 +11,9 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import { fas } from "@fortawesome/free-solid-svg-icons";
 import { far } from "@fortawesome/free-regular-svg-icons";
 import { Button } from "~/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+import { Popover, PopoverTrigger } from "~/components/ui/popover";
 import { Input } from "~/components/ui/input";
+import PopoverContentInline from "./PopoverContentInline";
 
 // Add all solid and regular icons to the library
 library.add(fas, far);
@@ -168,7 +165,7 @@ const FAIconPicker: React.FC<FAIconPickerProps> = ({
   };
 
   return (
-    <div>
+    <div onClick={(e) => e.stopPropagation()}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" className="w-52 justify-between">
@@ -186,7 +183,10 @@ const FAIconPicker: React.FC<FAIconPickerProps> = ({
             {selectedIcon ? selectedIcon.name : "Select icon..."}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px]">
+        <PopoverContentInline
+          className="w-[300px]"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="space-y-4">
             <Input
               type="text"
@@ -213,7 +213,7 @@ const FAIconPicker: React.FC<FAIconPickerProps> = ({
               </div>
             </div>
           </div>
-        </PopoverContent>
+        </PopoverContentInline>
       </Popover>
       {/* <p className="mt-2 text-xs text-gray-500">
         Total icons: {iconLookups.length}, Filtered: {filteredIcons.length}

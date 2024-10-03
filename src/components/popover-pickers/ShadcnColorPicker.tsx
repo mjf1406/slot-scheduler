@@ -7,13 +7,10 @@ import {
   HslaColorPicker,
 } from "react-colorful";
 import { Button } from "~/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+import { Popover, PopoverTrigger } from "~/components/ui/popover";
 import { Input } from "~/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import PopoverContentInline from "./PopoverContentInline";
 
 interface ColorPickerProps {
   onSelectColor: (color: string) => void;
@@ -166,7 +163,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
   };
 
   return (
-    <div>
+    <div onClick={(e) => e.stopPropagation()}>
       <Popover open={open} onOpenChange={handlePopoverOpenChange}>
         <PopoverTrigger asChild>
           <Button variant="outline" className="w-52 justify-between">
@@ -177,7 +174,10 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
             {currentColor}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px]">
+        <PopoverContentInline
+          className="w-[300px]"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Tabs defaultValue="hex">
             <TabsList className="grid w-full grid-cols-3 bg-secondary text-foreground">
               <TabsTrigger value="hex">Hex</TabsTrigger>
@@ -266,7 +266,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({
               </div>
             </TabsContent>
           </Tabs>
-        </PopoverContent>
+        </PopoverContentInline>
       </Popover>
     </div>
   );

@@ -26,10 +26,10 @@ import {
 import { Input } from "~/components/ui/input";
 import { toast } from "~/components/ui/use-toast";
 import { Loader2, Plus } from "lucide-react";
-import ColorPicker from "~/components/ShadcnColorPicker";
-import FAIconPicker from "~/components/FontAwesomeIconPicker";
 import { createClass } from "../../../actions";
 import type { IconName } from "@fortawesome/fontawesome-svg-core";
+import ColorPicker from "~/components/popover-pickers/ShadcnColorPicker";
+import FAIconPicker from "~/components/popover-pickers/FontAwesomeIconPicker";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
@@ -88,90 +88,112 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus size={20} className="mr-2" />
-          Create Class
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Create New Class</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            {/* Form fields remain unchanged */}
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Class name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
-                  <FormControl>
-                    <ColorPicker
-                      onSelectColor={field.onChange}
-                      selectedColor={field.value}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="icon_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Icon</FormLabel>
-                  <FormControl>
-                    <FAIconPicker
-                      onSelectIcon={(iconName, prefix) => {
-                        field.onChange(iconName);
-                        form.setValue("icon_prefix", prefix as "fas" | "far");
-                      }}
-                      selectedIcon={
-                        field.value
-                          ? {
-                              name: field.value as IconName,
-                              prefix: form.getValues("icon_prefix"),
-                            }
-                          : undefined
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>Creating...</span>
-                  </>
-                ) : (
-                  "Create Class"
+    <>
+      <style jsx global>{`
+        .dialog-content {
+          z-index: 50;
+        }
+        .picker-content {
+          z-index: 100;
+        }
+      `}</style>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus size={20} className="mr-2" />
+            Create Class
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="dialog-content sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Class</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {/* Form fields remain unchanged */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Class name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              />
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Color</FormLabel>
+                    <FormControl>
+                      <div className="picker-content">
+                        <ColorPicker
+                          onSelectColor={(color) => {
+                            console.log("Color selected:", color);
+                            field.onChange(color);
+                          }}
+                          selectedColor={field.value}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="icon_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Icon</FormLabel>
+                    <FormControl>
+                      <div className="picker-content">
+                        <FAIconPicker
+                          onSelectIcon={(iconName, prefix) => {
+                            console.log("Icon selected:", iconName, prefix);
+                            field.onChange(iconName);
+                            form.setValue(
+                              "icon_prefix",
+                              prefix as "fas" | "far",
+                            );
+                          }}
+                          selectedIcon={
+                            field.value
+                              ? {
+                                  name: field.value as IconName,
+                                  prefix: form.getValues("icon_prefix"),
+                                }
+                              : undefined
+                          }
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    "Create Class"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

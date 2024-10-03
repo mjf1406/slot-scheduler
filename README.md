@@ -17,7 +17,13 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 ### p0
 
+- UX: switched to [optimistic queries](https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates) so the UI updates before saving to the server
+
 ## Change Log
+
+2024/10/04
+
+- fixed: when creating/editing a class, the icon and color can now be selected again
 
 2024/10/03
 
