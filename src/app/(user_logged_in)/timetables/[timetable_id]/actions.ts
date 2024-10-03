@@ -3,7 +3,7 @@
 import { generateUuidWithPrefix } from "~/lib/utils";
 import { db } from "~/server/db";
 import { slots as slotsTable, slot_classes as slotClassesTable } from "~/server/db/schema";
-import type { Slot } from "~/server/db/types";
+import type { Slot, SlotClass } from "~/server/db/types";
 import { and, eq, gt, gte, lt, lte, ne, or } from "drizzle-orm"; // Adjust based on your Drizzle setup
 import { auth } from "@clerk/nextjs/server";
 
@@ -321,6 +321,63 @@ export async function removeSlotClassFromAllSlots(
       success: false,
       message:
         "Failed to remove class from slots for the target week due to a server error.",
+    };
+  }
+}
+
+export async function updateSlotClass(slotClass: SlotClass) {
+  console.log("Updating slot class:", slotClass);
+
+  // Authenticate the user
+  const { userId } = auth();
+  if (!userId) throw new Error("User not authenticated");
+
+  // Validate the input
+  if (!slotClass.id || !slotClass.timetable_id || !slotClass.slot_id || !slotClass.class_id) {
+    return {
+      success: false,
+      message: "Missing required fields"
+    };
+  }
+
+  try {
+    // Update the slot class in the database
+    const updatedSlotClasses = await db
+      .update(slotClassesTable)
+      .set({
+        text: slotClass.text,
+        size: slotClass.size,
+        // Only update the fields that are allowed to be updated
+        // We don't update IDs, week_number, or year as those are structural
+      })
+      .where(
+        and(
+          eq(slotClassesTable.id, slotClass.id),
+          eq(slotClassesTable.user_id, userId),
+          eq(slotClassesTable.timetable_id, slotClass.timetable_id)
+        )
+      )
+      .returning();
+
+    if (updatedSlotClasses.length === 0) {
+      return {
+        success: false,
+        message: "Slot class not found or you don't have permission to update it"
+      };
+    }
+
+    console.log("Successfully updated slot class:", updatedSlotClasses[0]);
+
+    return {
+      success: true,
+      message: "Slot class updated successfully",
+      slotClass: updatedSlotClasses[0]
+    };
+  } catch (error) {
+    console.error("Error updating slot class:", error);
+    return {
+      success: false,
+      message: "Failed to update slot class"
     };
   }
 }

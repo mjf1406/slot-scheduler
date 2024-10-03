@@ -1,7 +1,14 @@
 import React, { useState, useMemo } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Edit, Grip, MoreVertical, Trash2 } from "lucide-react";
+import {
+  Edit,
+  FileText,
+  Grip,
+  Monitor,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +28,7 @@ interface ClassItemProps {
   classData: Class;
   onEdit: (updatedClass: Class) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onClick: (classData: Class) => void;
   timetableId: string;
   size?: "small" | "normal";
   isDragging?: boolean;
@@ -30,6 +38,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   classData,
   onEdit,
   onDelete,
+  onClick,
   size = "normal",
   isDragging = false,
 }) => {
@@ -48,6 +57,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { theme } = useTheme();
 
   const textColorClass = useMemo(() => {
@@ -60,6 +70,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   const handleEdit = async (updatedClass: Class) => {
     await onEdit(updatedClass);
     setIsEditDialogOpen(false);
+    setIsDropdownOpen(false);
   };
 
   const handleDelete = async () => {
@@ -67,6 +78,12 @@ const ClassItem: React.FC<ClassItemProps> = ({
       await onDelete(classData.class_id);
     }
     setIsDeleteDialogOpen(false);
+    setIsDropdownOpen(false);
+  };
+
+  const handleDetailsClick = () => {
+    onClick(classData);
+    setIsDropdownOpen(false);
   };
 
   const sizeClasses = useMemo(() => {
@@ -92,11 +109,14 @@ const ClassItem: React.FC<ClassItemProps> = ({
         ref={setNodeRef}
         style={{ ...style, backgroundColor: classData.color || "#ffffff" }}
         className={`flex w-full touch-none items-center justify-between rounded shadow-sm transition-shadow duration-200 hover:shadow-md ${textColorClass} ${sizeClasses.container}`}
-        {...attributes}
-        {...listeners}
       >
         <div className="flex items-center justify-start gap-1">
-          <Grip size={size === "small" ? 16 : 20} className="cursor-move" />
+          <Grip
+            size={size === "small" ? 16 : 20}
+            className="cursor-move"
+            {...attributes}
+            {...listeners}
+          />
           {classData.icon_name ? (
             <FontAwesomeIcon
               icon={[classData.icon_prefix, classData.icon_name as IconName]}
@@ -112,7 +132,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
             {classData.name}
           </span>
         </div>
-        <DropdownMenu>
+        <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -123,12 +143,30 @@ const ClassItem: React.FC<ClassItemProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
-            <DropdownMenuItem onSelect={() => setIsEditDialogOpen(true)}>
+            <DropdownMenuItem
+              onSelect={() => {
+                setIsEditDialogOpen(true);
+                setIsDropdownOpen(false);
+              }}
+            >
               <Edit size={16} className="mr-2" /> Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleDetailsClick}>
+              <FileText size={16} className="mr-2" /> Details
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                /* TODO: Add functionality */
+              }}
+            >
+              <Monitor size={16} className="mr-2" /> Display
             </DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive hover:text-destructive-foreground"
-              onSelect={() => setIsDeleteDialogOpen(true)}
+              onSelect={() => {
+                setIsDeleteDialogOpen(true);
+                setIsDropdownOpen(false);
+              }}
             >
               <Trash2 size={16} className="mr-2" /> Delete
             </DropdownMenuItem>
@@ -138,14 +176,20 @@ const ClassItem: React.FC<ClassItemProps> = ({
 
       <EditClassDialog
         isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setIsDropdownOpen(false);
+        }}
         classData={classData}
         onEdit={handleEdit}
       />
 
       <DeleteConfirmationDialog
         isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setIsDropdownOpen(false);
+        }}
         onConfirm={handleDelete}
         itemName={classData.name}
       />

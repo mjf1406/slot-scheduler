@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import type { Slot, Class } from "~/server/db/types";
 import { EditTimeSlotDialog } from "./components/EditTimeSlotDialog";
 import { ActionDropdown } from "./components/ActionDropdown";
@@ -16,6 +16,7 @@ interface TimeSlotProps {
   timetableDays: string[];
   onEditClass: (updatedClass: Class) => Promise<void>;
   onDeleteClass: (id: string) => Promise<void>;
+  onClassClick: (classData: Class) => void;
 }
 
 export const TimeSlot: React.FC<TimeSlotProps> = ({
@@ -28,8 +29,10 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
   timetableDays,
   onEditClass,
   onDeleteClass,
+  onClassClick,
 }) => {
-  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { isOver, setNodeRef } = useDroppable({
     id: slot.slot_id,
     data: {
@@ -37,6 +40,16 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
       slot: slot,
     },
   });
+
+  const handleEditClick = useCallback(() => {
+    setIsEditDialogOpen(true);
+    setIsDropdownOpen(false);
+  }, []);
+
+  const handleDeleteClick = useCallback(() => {
+    onDeleteSlot(slot.slot_id);
+    setIsDropdownOpen(false);
+  }, [onDeleteSlot, slot.slot_id]);
 
   return (
     <div
@@ -59,6 +72,7 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
             onDelete={onDeleteClass}
             timetableId={slot.timetable_id}
             size="small"
+            onClick={onClassClick}
           />
         </div>
       ))}
@@ -67,16 +81,25 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
           {calculateDuration(slot.start_time, slot.end_time)}
         </span>
         <ActionDropdown
-          onEdit={() => setIsEditDialogOpen(true)}
-          onDelete={() => onDeleteSlot(slot.slot_id)}
+          onEdit={handleEditClick}
+          onDelete={handleDeleteClick}
+          isOpen={isDropdownOpen}
+          onOpenChange={setIsDropdownOpen}
         />
       </div>
 
       <EditTimeSlotDialog
         slot={slot}
         isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onEditSlot={onEditSlot}
+        onClose={() => {
+          setIsEditDialogOpen(false);
+          setIsDropdownOpen(false);
+        }}
+        onEditSlot={(updatedSlot) => {
+          onEditSlot(updatedSlot);
+          setIsEditDialogOpen(false);
+          setIsDropdownOpen(false);
+        }}
         timetableDays={timetableDays}
       />
     </div>

@@ -16,7 +16,7 @@ import { CreateClassDialog } from "./components/class/CreateClassDialog";
 import WeekView from "./components/WeekView";
 import { CreateSlotDialog } from "./components/slot/CreateSlotDialog";
 import ClassList from "./components/class/ClassList";
-import type { Class, Timetable, Slot } from "~/server/db/types";
+import type { Class, Timetable, Slot, SlotClass } from "~/server/db/types";
 import { deleteClass, editClass } from "../actions";
 import DayCarousel from "./components/DayCarousel";
 import { Button } from "~/components/ui/button";
@@ -26,6 +26,7 @@ import {
   moveSlotClass,
   removeSlotClassFromAllSlots,
   updateSlot,
+  updateSlotClass,
 } from "./actions";
 import {
   DndContext,
@@ -44,6 +45,7 @@ import {
   getUnassignedClassesForWeek,
   getYearAndWeekNumber,
 } from "./utils";
+import RichTextModal from "./components/text-editor/RichTextModal";
 
 export default function TimetablePage() {
   const params = useParams();
@@ -78,6 +80,10 @@ export default function TimetablePage() {
   const [unassignedClassesForCurrentWeek, setUnassignedClassesForCurrentWeek] =
     useState<Class[]>([]);
   const [showWeekView, setShowWeekView] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<SlotClass | null>(null);
+  const [selectedClassDetails, setSelectedClassDetails] =
+    useState<Class | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -85,6 +91,93 @@ export default function TimetablePage() {
       activationConstraint: { delay: 300, tolerance: 8 },
     }),
   );
+
+  const handleClassClick = (classData: SlotClass | Class) => {
+    if ("slot_id" in classData) {
+      // It's a SlotClass
+      setSelectedClass(classData);
+      const classDetails =
+        selectedTimetable?.classes.find(
+          (c) => c.class_id === classData.class_id,
+        ) ?? null;
+      setSelectedClassDetails(classDetails);
+    } else {
+      // It's a Class
+      // Find if this class has any existing SlotClass for the current week
+      const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
+      const existingSlotClass =
+        selectedTimetable?.slotClasses?.find(
+          (sc) =>
+            sc.class_id === classData.class_id &&
+            sc.year === year &&
+            sc.week_number === weekNumber,
+        ) ?? null;
+
+      setSelectedClass(existingSlotClass);
+      setSelectedClassDetails(classData);
+    }
+    setIsModalOpen(true);
+  };
+
+  // Update the handleSaveClassDetails function to handle both new and existing slot classes
+  const handleSaveClassDetails = async (updatedSlotClass: SlotClass) => {
+    console.log("handleSaveClassDetails called with:", updatedSlotClass);
+
+    try {
+      // First update the cache optimistically
+      queryClient.setQueryData(
+        timetablesOptions.queryKey,
+        (oldData: Timetable[] | undefined) =>
+          oldData?.map((timetable) => {
+            if (timetable.timetable_id === timetableId) {
+              const existingSlotClassIndex = (
+                timetable.slotClasses ?? []
+              ).findIndex((sc) => sc.id === updatedSlotClass.id);
+
+              const newSlotClasses = [...(timetable.slotClasses ?? [])];
+              if (existingSlotClassIndex >= 0) {
+                // Update existing slot class
+                newSlotClasses[existingSlotClassIndex] = updatedSlotClass;
+              } else {
+                // Add new slot class
+                newSlotClasses.push(updatedSlotClass);
+              }
+
+              return {
+                ...timetable,
+                slotClasses: newSlotClasses,
+              };
+            }
+            return timetable;
+          }),
+      );
+
+      // Then make the server call
+      const response = await updateSlotClass(updatedSlotClass);
+      console.log("Server response:", response);
+
+      if (!response?.success) {
+        // If the server call fails, invalidate the query to refresh the data
+        await queryClient.invalidateQueries({
+          queryKey: timetablesOptions.queryKey,
+        });
+      }
+
+      handleCloseModal();
+    } catch (error) {
+      console.error("Error updating class:", error);
+      // Invalidate the query to refresh the data
+      await queryClient.invalidateQueries({
+        queryKey: timetablesOptions.queryKey,
+      });
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedClass(null);
+    setSelectedClassDetails(null);
+  };
 
   const updateClassesForWeek = useCallback(() => {
     if (selectedTimetable) {
@@ -215,11 +308,9 @@ export default function TimetablePage() {
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
+    const { over } = event;
     if (!over || !selectedTimetable) return;
-
-    // const activeData = active.data.current as { type: string; class?: Class };
-    // const overData = over.data.current as { type: string; slot?: Slot };
+    // Handle drag over if needed
   };
 
   const handleDeleteSlot = async (slot_id: string) => {
@@ -233,11 +324,9 @@ export default function TimetablePage() {
         });
       } else {
         console.error("Failed to delete slot:", response.message);
-        // Handle the error (e.g., show an error message to the user)
       }
     } catch (error) {
       console.error("Error deleting slot:", error);
-      // Handle the error (e.g., show an error message to the user)
     }
   };
 
@@ -328,6 +417,20 @@ export default function TimetablePage() {
     }
   };
 
+  const handleGoToCurrentWeek = () => {
+    setCurrentWeekStart(getCurrentWeekStart());
+  };
+
+  const getCurrentWeekStart = useCallback(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const weekStart = new Date(
+      now.setDate(now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)),
+    );
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart;
+  }, []);
+
   if (!selectedTimetable) {
     return (
       <div className="flex h-dvh w-full flex-col items-center justify-center gap-3">
@@ -343,6 +446,13 @@ export default function TimetablePage() {
   return (
     <ContentLayout title="Timetables">
       <Suspense fallback={<LoadingPage />}>
+        <RichTextModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          classItem={selectedClass}
+          classDetails={selectedClassDetails}
+          onSave={handleSaveClassDetails}
+        />
         <DndContext
           sensors={sensors}
           modifiers={[restrictToWindowEdges]}
@@ -372,10 +482,14 @@ export default function TimetablePage() {
                   onEdit={handleEditClass}
                   onDelete={handleDeleteClass}
                   timetableId={selectedTimetable.timetable_id}
+                  onClassClick={handleClassClick}
                 />
               </div>
               <div className="col-span-3">
-                <div className="mb-4 flex justify-end">
+                <div className="mb-4 flex justify-end gap-2">
+                  <Button onClick={handleGoToCurrentWeek} variant="outline">
+                    Go to Current Week
+                  </Button>
                   <Button
                     onClick={() => setShowWeekView(!showWeekView)}
                     variant="outline"
@@ -408,6 +522,7 @@ export default function TimetablePage() {
                     onDeleteClass={handleDeleteClass}
                     currentWeekStart={currentWeekStart}
                     onWeekChange={handleWeekChange}
+                    onClassClick={handleClassClick}
                   />
                 ) : (
                   <DayCarousel
@@ -432,6 +547,7 @@ export default function TimetablePage() {
                     onDeleteClass={handleDeleteClass}
                     currentWeekStart={currentWeekStart}
                     onWeekChange={handleWeekChange}
+                    onClassClick={handleClassClick}
                   />
                 )}
               </div>

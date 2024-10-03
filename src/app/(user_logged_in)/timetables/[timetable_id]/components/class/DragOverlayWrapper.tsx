@@ -36,6 +36,9 @@ const DragOverlayWrapper: React.FC = () => {
           }}
           timetableId={activeData.class.timetable_id ?? ""}
           isDragging={true}
+          onClick={async () => {
+            // This is disabled during drag
+          }}
         />
       </div>
     </DragOverlay>

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import ClassItem from "./ClassItem";
-import type { Class } from "~/server/db/types";
+import type { Class, SlotClass } from "~/server/db/types";
 import { useDroppable } from "@dnd-kit/core";
 
 interface ClassListProps {
   classes: Class[];
   onEdit: (updatedClass: Class) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onClassClick: (classData: SlotClass | Class) => void;
   timetableId: string;
 }
 
@@ -14,6 +15,7 @@ const ClassList: React.FC<ClassListProps> = ({
   classes,
   onEdit,
   onDelete,
+  onClassClick,
   timetableId,
 }) => {
   const [classItems, setClassItems] = useState<Class[]>(classes);
@@ -47,6 +49,7 @@ const ClassList: React.FC<ClassListProps> = ({
                   classData={cls}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onClick={onClassClick}
                   timetableId={timetableId}
                 />
               ),

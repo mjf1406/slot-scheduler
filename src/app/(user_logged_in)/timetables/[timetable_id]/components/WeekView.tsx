@@ -27,6 +27,7 @@ type CalendarProps = {
   onDeleteClass: (id: string) => Promise<void>;
   currentWeekStart: Date;
   onWeekChange: (newWeekStart: Date) => void;
+  onClassClick: (classData: Class | SlotClass) => void;
 };
 
 export default function WeekView({
@@ -43,6 +44,7 @@ export default function WeekView({
   onDeleteClass,
   currentWeekStart,
   onWeekChange,
+  onClassClick, // Add this line
 }: CalendarProps) {
   const renderClassInSlot = (slot: Slot, classItem: Class) => {
     return (
@@ -57,6 +59,7 @@ export default function WeekView({
             onEdit={onEditClass}
             onDelete={onDeleteClass}
             timetableId={slot.timetable_id}
+            onClick={onClassClick} // Add this line
           />
         </div>
       </div>
@@ -220,6 +223,7 @@ export default function WeekView({
                     timetableDays={days}
                     onEditClass={onEditClass}
                     onDeleteClass={onDeleteClass}
+                    onClassClick={onClassClick} // Change onClick to onClassClick
                   />
                 ))}
             </div>

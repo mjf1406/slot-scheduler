@@ -22,6 +22,7 @@ type CalendarCarouselProps = {
   onDeleteClass: (id: string) => Promise<void>;
   currentWeekStart: Date;
   onWeekChange: (newWeekStart: Date) => void;
+  onClassClick: (classData: Class | SlotClass) => void; // Add this line
 };
 
 interface ExtendedClass extends Class {
@@ -42,6 +43,7 @@ export default function DayCarousel({
   onDeleteClass,
   currentWeekStart,
   onWeekChange,
+  onClassClick, // Add this line
 }: CalendarCarouselProps) {
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
 
@@ -228,6 +230,7 @@ export default function DayCarousel({
                     timetableDays={days}
                     onEditClass={onEditClass}
                     onDeleteClass={onDeleteClass}
+                    onClassClick={onClassClick} // Change onClick to onClassClick
                   />
                 ))}
             </div>
