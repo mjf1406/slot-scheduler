@@ -1,6 +1,12 @@
 "use client";
 
-import React, { Suspense, useState } from "react";
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useParams } from "next/navigation";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { timetablesOptions } from "~/app/api/queryOptions";
@@ -14,7 +20,13 @@ import type { Class, Timetable, Slot } from "~/server/db/types";
 import { deleteClass, editClass } from "../actions";
 import DayCarousel from "./components/DayCarousel";
 import { Button } from "~/components/ui/button";
-import { createSlot, deleteSlot, updateSlot } from "./actions";
+import {
+  createSlot,
+  deleteSlot,
+  moveSlotClass,
+  removeSlotClassFromAllSlots,
+  updateSlot,
+} from "./actions";
 import {
   DndContext,
   type DragEndEvent,
@@ -26,48 +38,199 @@ import {
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import DragOverlayWrapper from "./components/class/DragOverlayWrapper";
-import { customCollisionDetection } from "./utils";
-
-interface ExtendedClass extends Class {
-  slot_id?: string;
-  day?: string;
-}
+import {
+  customCollisionDetection,
+  getClassesForWeek,
+  getUnassignedClassesForWeek,
+  getYearAndWeekNumber,
+} from "./utils";
 
 export default function TimetablePage() {
   const params = useParams();
   const timetableId = params.timetable_id as string;
   const queryClient = useQueryClient();
   const { data: timetables } = useSuspenseQuery(timetablesOptions);
-  // const selectedTimetable = timetables?.find( (t) => t.timetable_id === timetableId);
-  const [selectedTimetable, setSelectedTimetable] = useState<
-    Timetable | undefined
-  >(timetables?.find((t) => t.timetable_id === timetableId));
-  const [timeSlots, setTimeSlots] = useState<Slot[]>(
-    selectedTimetable?.slots ?? [],
+
+  // Derive selectedTimetable directly from the query data
+  const selectedTimetable = useMemo(
+    () => timetables?.find((t) => t.timetable_id === timetableId),
+    [timetables, timetableId],
   );
+
+  // Derive timeSlots from selectedTimetable
+  const timeSlots = useMemo(
+    () => selectedTimetable?.slots ?? [],
+    [selectedTimetable],
+  );
+
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const weekStart = new Date(
+      now.setDate(now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)),
+    );
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart;
+  });
+  const [classesForCurrentWeek, setClassesForCurrentWeek] = useState<Class[]>(
+    [],
+  );
+  const [unassignedClassesForCurrentWeek, setUnassignedClassesForCurrentWeek] =
+    useState<Class[]>([]);
   const [showWeekView, setShowWeekView] = useState(true);
+
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 300,
-        tolerance: 8,
-      },
+      activationConstraint: { delay: 300, tolerance: 8 },
     }),
   );
+
+  const updateClassesForWeek = useCallback(() => {
+    if (selectedTimetable) {
+      const assignedClasses = getClassesForWeek(
+        selectedTimetable,
+        currentWeekStart,
+      );
+      const unassignedClasses = getUnassignedClassesForWeek(
+        selectedTimetable,
+        currentWeekStart,
+      );
+      setClassesForCurrentWeek(assignedClasses);
+      setUnassignedClassesForCurrentWeek(unassignedClasses);
+    }
+  }, [selectedTimetable, currentWeekStart]);
+
+  useEffect(() => {
+    updateClassesForWeek();
+  }, [updateClassesForWeek]);
+
+  const handleWeekChange = (newWeekStart: Date) => {
+    setCurrentWeekStart(newWeekStart);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || !selectedTimetable) return;
+
+    const activeData = active.data.current as { type: string; class?: Class };
+    const overData = over.data.current as { type: string; slot?: Slot };
+
+    if (activeData.type === "ClassItem" && activeData.class) {
+      const droppedClass = activeData.class;
+      const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
+
+      if (overData.type === "TimeSlot" && overData.slot) {
+        const targetSlot = overData.slot;
+
+        // Update the server
+        const response = await moveSlotClass(
+          droppedClass.class_id,
+          targetSlot.slot_id,
+          selectedTimetable.timetable_id,
+          year,
+          weekNumber,
+        );
+
+        if (response.success && response.slotClassesForWeek) {
+          // Update the query cache with the new slotClasses for the current week
+          queryClient.setQueryData(
+            timetablesOptions.queryKey,
+            (oldData: Timetable[] | undefined) =>
+              oldData?.map((timetable) => {
+                if (timetable.timetable_id === selectedTimetable.timetable_id) {
+                  // Merge existing slotClasses with the updated ones for the current week
+                  const otherSlotClasses = (timetable.slotClasses ?? []).filter(
+                    (sc) => sc.year !== year || sc.week_number !== weekNumber,
+                  );
+
+                  // Remove duplicates based on slotClass IDs
+                  const allSlotClasses = [
+                    ...otherSlotClasses,
+                    ...response.slotClassesForWeek,
+                  ];
+                  const uniqueSlotClasses = Array.from(
+                    new Map(allSlotClasses.map((sc) => [sc.id, sc])).values(),
+                  );
+
+                  return {
+                    ...timetable,
+                    slotClasses: uniqueSlotClasses,
+                  };
+                }
+                return timetable;
+              }),
+          );
+          updateClassesForWeek();
+        } else {
+          console.error("Failed to move class:", response.message);
+        }
+      } else if (
+        overData.type === "UnassignedArea" ||
+        overData.type === "ClassItem"
+      ) {
+        // Update the server
+        const response = await removeSlotClassFromAllSlots(
+          droppedClass.class_id,
+          selectedTimetable.timetable_id,
+          year,
+          weekNumber,
+        );
+
+        if (response.success && response.slotClassesForWeek) {
+          // Update the query cache with the new slotClasses for the current week
+          queryClient.setQueryData(
+            timetablesOptions.queryKey,
+            (oldData: Timetable[] | undefined) =>
+              oldData?.map((timetable) => {
+                if (timetable.timetable_id === selectedTimetable.timetable_id) {
+                  // Merge existing slotClasses with the updated ones for the current week
+                  const otherSlotClasses = (timetable.slotClasses ?? []).filter(
+                    (sc) => sc.year !== year || sc.week_number !== weekNumber,
+                  );
+
+                  // Remove duplicates
+                  const allSlotClasses = [
+                    ...otherSlotClasses,
+                    ...response.slotClassesForWeek,
+                  ];
+                  const uniqueSlotClasses = Array.from(
+                    new Map(allSlotClasses.map((sc) => [sc.id, sc])).values(),
+                  );
+
+                  return {
+                    ...timetable,
+                    slotClasses: uniqueSlotClasses,
+                  };
+                }
+                return timetable;
+              }),
+          );
+          updateClassesForWeek();
+        } else {
+          console.error("Failed to remove class from slots:", response.message);
+        }
+      }
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || !selectedTimetable) return;
+
+    // const activeData = active.data.current as { type: string; class?: Class };
+    // const overData = over.data.current as { type: string; slot?: Slot };
+  };
 
   const handleDeleteSlot = async (slot_id: string) => {
     try {
       const response = await deleteSlot(slot_id);
 
       if (response.success) {
-        setTimeSlots((slots) =>
-          slots.filter((slot) => slot.slot_id !== slot_id),
-        );
+        // Invalidate the query to refetch the updated data
+        await queryClient.invalidateQueries({
+          queryKey: [timetablesOptions.queryKey],
+        });
       } else {
         console.error("Failed to delete slot:", response.message);
         // Handle the error (e.g., show an error message to the user)
@@ -81,15 +244,16 @@ export default function TimetablePage() {
   const handleCreateSlot = async (
     newSlot: Omit<Slot, "slot_id" | "user_id" | "timetable_id">,
   ) => {
-    console.log("🚀 ~ handleCreateSlot ~ newSlot:", newSlot);
     const response = await createSlot({
       ...newSlot,
       timetable_id: timetableId,
     });
-    console.log("🚀 ~ handleCreateSlot ~ response:", response);
 
     if (response.success && response.slot) {
-      setTimeSlots((slots) => [...slots, response.slot]);
+      // Invalidate the query to refetch the updated data
+      await queryClient.invalidateQueries({
+        queryKey: [timetablesOptions.queryKey],
+      });
     } else {
       console.error("Failed to create slot:", response.message);
     }
@@ -98,16 +262,12 @@ export default function TimetablePage() {
   const handleEditSlot = async (updatedSlot: Slot) => {
     try {
       const response = await updateSlot(updatedSlot);
-      console.log("🚀 ~ handleEditSlot ~ response:", response);
 
       if (response.success && response.slot) {
-        setTimeSlots((prevSlots) =>
-          prevSlots.map((slot) =>
-            slot.slot_id === updatedSlot.slot_id
-              ? (response.slot ?? slot)
-              : slot,
-          ),
-        );
+        // Invalidate the query to refetch the updated data
+        await queryClient.invalidateQueries({
+          queryKey: [timetablesOptions.queryKey],
+        });
       } else {
         console.error("Failed to edit slot:", response.message);
       }
@@ -117,8 +277,7 @@ export default function TimetablePage() {
   };
 
   const handleEditClass = async (updatedClass: Class) => {
-    console.log("🚀 ~ handleEditClass ~ updatedClass:", updatedClass);
-    // Optimistically update the UI
+    // Optimistically update the query cache
     queryClient.setQueryData(timetablesOptions.queryKey, (oldData) => {
       return oldData?.map((timetable: Timetable) => {
         if (timetable.timetable_id === timetableId) {
@@ -162,7 +321,7 @@ export default function TimetablePage() {
     try {
       await deleteClass(classId);
     } catch (error) {
-      console.error("Failed to edit class:", error);
+      console.error("Failed to delete class:", error);
       await queryClient.invalidateQueries({
         queryKey: timetablesOptions.queryKey,
       });
@@ -174,7 +333,6 @@ export default function TimetablePage() {
       <div className="flex h-dvh w-full flex-col items-center justify-center gap-3">
         <p className="text-2xl text-destructive">Timetable not found.</p>
         <p className="max-w-md text-center">
-          {" "}
           It is possible that you do not have access to this timetable. If you
           know you have access, please try again.
         </p>
@@ -210,9 +368,7 @@ export default function TimetablePage() {
             <div className="flex grid-cols-4 flex-col gap-5 xl:grid">
               <div className="col-span-1">
                 <ClassList
-                  classes={selectedTimetable.classes.filter(
-                    (cls) => !(cls as ExtendedClass).slot_id,
-                  )}
+                  classes={unassignedClassesForCurrentWeek}
                   onEdit={handleEditClass}
                   onDelete={handleDeleteClass}
                   timetableId={selectedTimetable.timetable_id}
@@ -235,12 +391,23 @@ export default function TimetablePage() {
                     end_time={selectedTimetable.end_time}
                     days={selectedTimetable.days}
                     timeSlots={timeSlots}
-                    classes={selectedTimetable.classes}
+                    classes={classesForCurrentWeek}
+                    slotClasses={
+                      (selectedTimetable?.slotClasses ?? []).filter((sc) => {
+                        const { year, weekNumber } =
+                          getYearAndWeekNumber(currentWeekStart);
+                        return (
+                          sc.year === year && sc.week_number === weekNumber
+                        );
+                      }) ?? []
+                    }
                     onDeleteSlot={handleDeleteSlot}
                     onCreateSlot={handleCreateSlot}
                     onEditSlot={handleEditSlot}
                     onEditClass={handleEditClass}
                     onDeleteClass={handleDeleteClass}
+                    currentWeekStart={currentWeekStart}
+                    onWeekChange={handleWeekChange}
                   />
                 ) : (
                   <DayCarousel
@@ -248,12 +415,23 @@ export default function TimetablePage() {
                     end_time={selectedTimetable.end_time}
                     days={selectedTimetable.days}
                     timeSlots={timeSlots}
-                    classes={selectedTimetable.classes}
+                    classes={classesForCurrentWeek}
+                    slotClasses={
+                      (selectedTimetable?.slotClasses ?? []).filter((sc) => {
+                        const { year, weekNumber } =
+                          getYearAndWeekNumber(currentWeekStart);
+                        return (
+                          sc.year === year && sc.week_number === weekNumber
+                        );
+                      }) ?? []
+                    }
                     onDeleteSlot={handleDeleteSlot}
                     onCreateSlot={handleCreateSlot}
                     onEditSlot={handleEditSlot}
                     onEditClass={handleEditClass}
                     onDeleteClass={handleDeleteClass}
+                    currentWeekStart={currentWeekStart}
+                    onWeekChange={handleWeekChange}
                   />
                 )}
               </div>
@@ -264,173 +442,4 @@ export default function TimetablePage() {
       </Suspense>
     </ContentLayout>
   );
-
-  function handleDragOver(event: DragOverEvent) {
-    const { active, over } = event;
-    if (!over || !selectedTimetable) return;
-
-    const activeData = active.data.current as { type: string; class?: Class };
-    const overData = over.data.current as { type: string; slot?: Slot };
-
-    console.log("Drag end - Active:", activeData.type);
-    console.log("Drag end - Over:", overData.type);
-  }
-
-  // function handleDragEnd(event: DragEndEvent) {
-  //   const { active, over } = event;
-
-  //   if (!over || !selectedTimetable) return;
-
-  //   const activeData = active.data.current as { type: string; class?: Class };
-  //   const overData = over.data.current as {
-  //     type: string;
-  //     class?: Class;
-  //     slot?: Slot;
-  //   };
-
-  //   console.log("Drag end - Active:", activeData.type);
-  //   console.log("Drag end - Over:", overData.type);
-
-  //   if (activeData.type === "ClassItem" && activeData.class) {
-  //     const droppedClass = activeData.class;
-  //     let updatedClasses = [...selectedTimetable.classes];
-
-  //     if (overData.type === "ClassItem") {
-  //       // Handle dropping on another class item (either in ClassList or in a TimeSlot)
-  //       const targetClass = overData.class;
-
-  //       if (targetClass) {
-  //         // If the target class has no slot_id, we're dropping into the ClassList
-  //         if (!targetClass.slot_id) {
-  //           // Remove slot_id and day from the dropped class
-  //           updatedClasses = updatedClasses.map((cls) =>
-  //             cls.class_id === droppedClass.class_id
-  //               ? { ...cls, slot_id: undefined, day: undefined }
-  //               : cls,
-  //           );
-
-  //           // Reorder within the ClassList
-  //           const oldIndex = updatedClasses.findIndex(
-  //             (cls) => cls.class_id === droppedClass.class_id,
-  //           );
-  //           const newIndex = updatedClasses.findIndex(
-  //             (cls) => cls.class_id === targetClass.class_id,
-  //           );
-
-  //           if (oldIndex !== newIndex) {
-  //             const [movedClass] = updatedClasses.splice(oldIndex, 1);
-  //             if (movedClass) updatedClasses.splice(newIndex, 0, movedClass);
-  //           }
-  //         } else {
-  //           // If the target class has a slot_id, we're dropping into a TimeSlot
-  //           updatedClasses = updatedClasses.map((cls) =>
-  //             cls.class_id === droppedClass.class_id
-  //               ? { ...cls, slot_id: targetClass.slot_id, day: targetClass.day }
-  //               : cls,
-  //           );
-  //         }
-  //       }
-  //     } else if (overData.type === "TimeSlot" && overData.slot) {
-  //       // Handle dropping directly onto a TimeSlot
-  //       const targetSlot = overData.slot;
-  //       updatedClasses = updatedClasses.map((cls) =>
-  //         cls.class_id === droppedClass.class_id
-  //           ? { ...cls, slot_id: targetSlot.slot_id, day: targetSlot.day }
-  //           : cls,
-  //       );
-  //     } else if (overData.type === "UnassignedArea") {
-  //       // Handle dropping directly onto the unassigned area
-  //       updatedClasses = updatedClasses.map((cls) =>
-  //         cls.class_id === droppedClass.class_id
-  //           ? { ...cls, slot_id: undefined, day: undefined }
-  //           : cls,
-  //       );
-  //     }
-
-  //     setSelectedTimetable({
-  //       ...selectedTimetable,
-  //       classes: updatedClasses,
-  //     });
-
-  //     // You might also want to make an API call to persist this change
-  //     // updateClassAssignments(selectedTimetable.timetable_id, updatedClasses);
-  //   }
-  // }
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-
-    if (!over || !selectedTimetable) return;
-
-    const activeData = active.data.current as {
-      type: string;
-      class?: ExtendedClass;
-    };
-    const overData = over.data.current as {
-      type: string;
-      class?: ExtendedClass;
-      slot?: Slot;
-    };
-
-    console.log("Drag end - Active:", activeData.type);
-    console.log("Drag end - Over:", overData.type);
-
-    if (activeData.type === "ClassItem" && activeData.class) {
-      const droppedClass = activeData.class;
-      let updatedClasses = [...selectedTimetable.classes] as ExtendedClass[];
-
-      if (overData.type === "ClassItem") {
-        const targetClass = overData.class;
-
-        if (targetClass) {
-          if (!targetClass.slot_id) {
-            updatedClasses = updatedClasses.map((cls) =>
-              cls.class_id === droppedClass.class_id
-                ? { ...cls, slot_id: undefined, day: undefined }
-                : cls,
-            );
-
-            const oldIndex = updatedClasses.findIndex(
-              (cls) => cls.class_id === droppedClass.class_id,
-            );
-            const newIndex = updatedClasses.findIndex(
-              (cls) => cls.class_id === targetClass.class_id,
-            );
-
-            if (oldIndex !== newIndex) {
-              const [movedClass] = updatedClasses.splice(oldIndex, 1);
-              if (movedClass) updatedClasses.splice(newIndex, 0, movedClass);
-            }
-          } else {
-            updatedClasses = updatedClasses.map((cls) =>
-              cls.class_id === droppedClass.class_id
-                ? { ...cls, slot_id: targetClass.slot_id, day: targetClass.day }
-                : cls,
-            );
-          }
-        }
-      } else if (overData.type === "TimeSlot" && overData.slot) {
-        const targetSlot = overData.slot;
-        updatedClasses = updatedClasses.map((cls) =>
-          cls.class_id === droppedClass.class_id
-            ? { ...cls, slot_id: targetSlot.slot_id, day: targetSlot.day }
-            : cls,
-        );
-      } else if (overData.type === "UnassignedArea") {
-        updatedClasses = updatedClasses.map((cls) =>
-          cls.class_id === droppedClass.class_id
-            ? { ...cls, slot_id: undefined, day: undefined }
-            : cls,
-        );
-      }
-
-      setSelectedTimetable({
-        ...selectedTimetable,
-        classes: updatedClasses,
-      });
-
-      // You might also want to make an API call to persist this change
-      // updateClassAssignments(selectedTimetable.timetable_id, updatedClasses);
-    }
-  }
 }

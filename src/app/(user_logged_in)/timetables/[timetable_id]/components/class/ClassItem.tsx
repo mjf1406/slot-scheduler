@@ -1,6 +1,5 @@
-// components/class/ClassItem.tsx
 import React, { useState, useMemo } from "react";
-import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Edit, Grip, MoreVertical, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -34,8 +33,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   size = "normal",
   isDragging = false,
 }) => {
-  // Initialize useDraggable and useDroppable
-  const { isOver, setNodeRef: setDroppableNodeRef } = useDroppable({
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: classData.class_id,
     data: {
       type: "ClassItem",
@@ -43,30 +41,9 @@ const ClassItem: React.FC<ClassItemProps> = ({
     },
   });
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef: setDraggableNodeRef,
-    transform,
-  } = useDraggable({
-    id: classData.class_id,
-    data: {
-      type: "ClassItem",
-      class: classData,
-    },
-  });
-
-  // Combine refs
-  const setNodeRef = (element: HTMLElement | null) => {
-    setDroppableNodeRef(element);
-    setDraggableNodeRef(element);
-  };
-
-  // Style adjustments during drag
   const style = {
     transform: CSS.Translate.toString(transform),
-    // transition,
-    opacity: (isOver ?? isDragging) ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -115,14 +92,11 @@ const ClassItem: React.FC<ClassItemProps> = ({
         ref={setNodeRef}
         style={{ ...style, backgroundColor: classData.color || "#ffffff" }}
         className={`flex w-full touch-none items-center justify-between rounded shadow-sm transition-shadow duration-200 hover:shadow-md ${textColorClass} ${sizeClasses.container}`}
+        {...attributes}
+        {...listeners}
       >
         <div className="flex items-center justify-start gap-1">
-          <Grip
-            size={size === "small" ? 16 : 20}
-            className="cursor-move"
-            {...listeners}
-            {...attributes}
-          />
+          <Grip size={size === "small" ? 16 : 20} className="cursor-move" />
           {classData.icon_name ? (
             <FontAwesomeIcon
               icon={[classData.icon_prefix, classData.icon_name as IconName]}

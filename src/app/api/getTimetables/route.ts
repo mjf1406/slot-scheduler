@@ -2,7 +2,7 @@
 
 import { NextResponse } from 'next/server';
 import { db } from '~/server/db/index';
-import { timetables, classes, slots as slotsTable } from '~/server/db/schema';
+import { timetables, classes, slots as slotsTable, slot_classes } from '~/server/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Timetable, Class } from '~/server/db/types';
 import { auth } from '@clerk/nextjs/server';
@@ -31,6 +31,11 @@ export async function GET() {
             .from(slotsTable)
             .where(eq(slotsTable.user_id, userId))
 
+        const slotClasses = await db
+            .select()
+            .from(slot_classes)
+            .where(eq(slot_classes.user_id, userId))
+
         // Format timetables
         const formattedTimetables: Timetable[] = fetchedTimetables.map(timetable => ({
             user_id: timetable.user_id,
@@ -41,6 +46,7 @@ export async function GET() {
             start_time: timetable.start_time,
             end_time: timetable.end_time,
             classes: [],
+            slotClasses: slotClasses.filter(i => i.timetable_id === timetable.timetable_id)
         }));
 
         // Format classes

@@ -12,16 +12,19 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 ### p1
 
+- all items to be added to each class, like a "Things we're doing today". It duplicates how I use Obsidian Canvas for each block.
 - slots: added an edit button to created slots that prompts you to change all future slots, or just this one
 - UX: when adding a class, class applies to current timetable or selected timetables
 
 ### p0
 
-- backend: when dragging a class to a slot, DO SOMETHING IN BACKEND -- needs thinking, hard
-- UX: when dragging a class to a slot, the class needs to be over the slot with some padding
 - UI: added a today button to make the calendar go to the week that has today in it
 
 ## Change Log
+
+2024/10/03
+
+- added: user can now move classes to timeslots and they will stay when moving to another week and load correctly when reloading the page
 
 2024/09/21
 

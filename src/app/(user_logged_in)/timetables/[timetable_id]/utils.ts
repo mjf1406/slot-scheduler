@@ -1,4 +1,5 @@
 import type { CollisionDetection } from '@dnd-kit/core';
+import type { Timetable, Class } from '~/server/db/types';
 
 export const customCollisionDetection: CollisionDetection = ({
   droppableContainers,
@@ -64,3 +65,74 @@ export const customCollisionDetection: CollisionDetection = ({
 
   return [];
 };
+
+export function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+export function getYearAndWeekNumber(date: Date) {
+  const year = date.getFullYear();
+  const weekNumber = getWeekNumber(date);
+  return { year, weekNumber };
+}
+
+export function getClassesForWeek(
+  timetable: Timetable,
+  currentWeekStart: Date
+): Class[] {
+  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
+
+  const assignedClassIds = new Set(
+    (timetable.slotClasses ?? [])
+      .filter(
+        (slotClass) =>
+          slotClass.year === year && slotClass.week_number === weekNumber
+      )
+      .map((slotClass) => slotClass.class_id)
+  );
+
+  return timetable.classes.filter((cls) => assignedClassIds.has(cls.class_id));
+}
+
+export function getUnassignedClassesForWeek(
+  timetable: Timetable,
+  currentWeekStart: Date
+): Class[] {
+  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
+
+  const assignedClassIds = new Set(
+    (timetable.slotClasses ?? [])
+      .filter(
+        (slotClass) =>
+          slotClass.year === year && slotClass.week_number === weekNumber
+      )
+      .map((slotClass) => slotClass.class_id)
+  );
+
+  return timetable.classes.filter(
+    (cls) => !assignedClassIds.has(cls.class_id)
+  );
+}
+
+export function calculateDateFromDay(day: string, weekStart: Date): Date {
+  const daysOfWeek = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const targetDay = daysOfWeek.indexOf(day);
+
+  const targetDate = new Date(weekStart);
+  targetDate.setDate(weekStart.getDate() + targetDay);
+  targetDate.setHours(12, 0, 0, 0); // Reset the time to noon to avoid timezone issues
+
+  return targetDate;
+}

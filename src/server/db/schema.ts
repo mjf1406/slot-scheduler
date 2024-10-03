@@ -74,3 +74,25 @@ export const slots = sqliteTable('slots',
       }
   }
 )
+
+export const slot_classes = sqliteTable('slot_classes',
+  {
+    id: text('id').notNull().primaryKey(),
+    user_id: text('user_id').notNull().references(() => users.user_id),
+    timetable_id: text('timetable_id').notNull().references(() => timetables.timetable_id),
+    slot_id: text('slot_id').notNull().references(() => slots.slot_id),
+    class_id: text('class_id').notNull().references(() => classes.class_id),
+    week_number: integer('week_number').notNull(),
+    year: integer('year').notNull(),
+    size: text('size').$type<"whole" | "split">().notNull(),
+    text: text('text'),
+  },
+  (table) => ({
+    slot_classes_timetable_idx: index("slot_classes_timetable_idx").on(table.timetable_id),
+    slot_classes_slot_idx: index("slot_classes_slot_idx").on(table.slot_id),
+    slot_classes_class_idx: index("slot_classes_class_idx").on(table.class_id),
+    slot_classes_week_year_idx: index("slot_classes_week_year_idx").on(table.week_number, table.year),
+    slot_classes_slot_week_year_idx: index("slot_classes_slot_week_year_idx").on(table.slot_id, table.week_number, table.year),
+    slot_classes_class_week_year_idx: index("slot_classes_class_week_year_idx").on(table.class_id, table.week_number, table.year),
+  })
+)

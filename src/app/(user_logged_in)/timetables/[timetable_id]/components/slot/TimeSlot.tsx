@@ -1,6 +1,3 @@
-// components/TimeSlot.tsx
-"use client";
-
 import React from "react";
 import type { Slot, Class } from "~/server/db/types";
 import { EditTimeSlotDialog } from "./components/EditTimeSlotDialog";
@@ -33,17 +30,13 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
   onDeleteClass,
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
-  const { isOver, setNodeRef: setDroppableNodeRef } = useDroppable({
+  const { isOver, setNodeRef } = useDroppable({
     id: slot.slot_id,
     data: {
       type: "TimeSlot",
       slot: slot,
     },
   });
-
-  const setNodeRef = (element: HTMLElement | null) => {
-    setDroppableNodeRef(element);
-  };
 
   return (
     <div

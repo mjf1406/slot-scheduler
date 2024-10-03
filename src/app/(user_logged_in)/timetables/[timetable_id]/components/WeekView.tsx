@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { calculateDuration } from "~/lib/utils";
-import type { Slot, Class } from "~/server/db/types";
+import type { Slot, Class, SlotClass } from "~/server/db/types";
 import { TimeSlot } from "./slot/TimeSlot";
 import { HOUR_SIZE_PIXELS } from "~/lib/constants";
 import ClassItem from "./class/ClassItem";
@@ -19,11 +19,14 @@ type CalendarProps = {
   days: string[];
   timeSlots: Slot[];
   classes: ExtendedClass[];
+  slotClasses: SlotClass[];
   onDeleteSlot: (id: string) => void;
   onCreateSlot: (slot: Omit<Slot, "id">) => void;
   onEditSlot: (slot: Slot, editFuture: boolean) => void;
   onEditClass: (updatedClass: Class) => Promise<void>;
   onDeleteClass: (id: string) => Promise<void>;
+  currentWeekStart: Date;
+  onWeekChange: (newWeekStart: Date) => void;
 };
 
 export default function WeekView({
@@ -32,20 +35,15 @@ export default function WeekView({
   days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
   timeSlots = [],
   classes = [],
+  slotClasses = [], // Add this new prop
   onDeleteSlot,
   onCreateSlot,
   onEditSlot,
   onEditClass,
   onDeleteClass,
+  currentWeekStart,
+  onWeekChange,
 }: CalendarProps) {
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    return new Date(
-      now.setDate(now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)),
-    );
-  });
-
   const renderClassInSlot = (slot: Slot, classItem: Class) => {
     return (
       <div
@@ -66,19 +64,15 @@ export default function WeekView({
   };
 
   const goToPreviousWeek = () => {
-    setCurrentWeekStart((prevDate) => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() - 7);
-      return newDate;
-    });
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(newWeekStart.getDate() - 7);
+    onWeekChange(newWeekStart);
   };
 
   const goToNextWeek = () => {
-    setCurrentWeekStart((prevDate) => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() + 7);
-      return newDate;
-    });
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(newWeekStart.getDate() + 7);
+    onWeekChange(newWeekStart);
   };
 
   const generateWeekDays = () => {
@@ -122,6 +116,15 @@ export default function WeekView({
       top: `${top}px`,
       height: `${height}px`,
     };
+  };
+
+  const getClassesForSlot = (slot: Slot) => {
+    return classes.filter((cls) => {
+      const slotClass = slotClasses.find(
+        (sc) => sc.class_id === cls.class_id && sc.slot_id === slot.slot_id,
+      );
+      return !!slotClass;
+    });
   };
 
   return (
@@ -209,9 +212,7 @@ export default function WeekView({
                   <TimeSlot
                     key={slot.slot_id}
                     slot={slot}
-                    classes={classes.filter(
-                      (cls) => cls.slot_id === slot.slot_id,
-                    )}
+                    classes={getClassesForSlot(slot)}
                     onDeleteSlot={onDeleteSlot}
                     getSlotStyle={getSlotStyle}
                     onEditSlot={(updatedSlot) => onEditSlot(updatedSlot, false)}

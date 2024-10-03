@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { calculateDuration } from "~/lib/utils";
-import type { Slot, Class } from "~/server/db/types";
+import type { Slot, Class, SlotClass } from "~/server/db/types";
 import { TimeSlot } from "./slot/TimeSlot";
 import { HOUR_SIZE_PIXELS } from "~/lib/constants";
 
@@ -14,11 +14,14 @@ type CalendarCarouselProps = {
   days: string[];
   timeSlots: Slot[];
   classes: ExtendedClass[];
+  slotClasses: SlotClass[];
   onDeleteSlot: (id: string) => void;
   onCreateSlot: (slot: Omit<Slot, "id">) => void;
   onEditSlot: (slot: Slot, editFuture: boolean) => void;
   onEditClass: (updatedClass: Class) => Promise<void>;
   onDeleteClass: (id: string) => Promise<void>;
+  currentWeekStart: Date;
+  onWeekChange: (newWeekStart: Date) => void;
 };
 
 interface ExtendedClass extends Class {
@@ -31,36 +34,27 @@ export default function DayCarousel({
   days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
   timeSlots = [],
   classes = [],
+  slotClasses = [], // Add this new prop
   onDeleteSlot,
   onCreateSlot,
   onEditSlot,
   onEditClass,
   onDeleteClass,
+  currentWeekStart,
+  onWeekChange,
 }: CalendarCarouselProps) {
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    return new Date(
-      now.setDate(now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)),
-    );
-  });
-
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
 
   const goToPreviousWeek = () => {
-    setCurrentWeekStart((prevDate) => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() - 7);
-      return newDate;
-    });
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(newWeekStart.getDate() - 7);
+    onWeekChange(newWeekStart);
   };
 
   const goToNextWeek = () => {
-    setCurrentWeekStart((prevDate) => {
-      const newDate = new Date(prevDate);
-      newDate.setDate(newDate.getDate() + 7);
-      return newDate;
-    });
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(newWeekStart.getDate() + 7);
+    onWeekChange(newWeekStart);
   };
 
   const goToPreviousDays = () => {
@@ -120,6 +114,15 @@ export default function DayCarousel({
 
   const visibleDays = days.slice(currentDayIndex, currentDayIndex + 2);
   const visibleDates = weekDays.slice(currentDayIndex, currentDayIndex + 2);
+
+  const getClassesForSlot = (slot: Slot) => {
+    return classes.filter((cls) => {
+      const slotClass = slotClasses.find(
+        (sc) => sc.class_id === cls.class_id && sc.slot_id === slot.slot_id,
+      );
+      return !!slotClass;
+    });
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -217,9 +220,7 @@ export default function DayCarousel({
                   <TimeSlot
                     key={slot.slot_id}
                     slot={slot}
-                    classes={classes.filter(
-                      (cls) => cls.slot_id === slot.slot_id,
-                    )}
+                    classes={getClassesForSlot(slot)}
                     onDeleteSlot={onDeleteSlot}
                     getSlotStyle={getSlotStyle}
                     onEditSlot={(updatedSlot) => onEditSlot(updatedSlot, false)}

@@ -2,7 +2,7 @@
 
 import { generateUuidWithPrefix } from "~/lib/utils";
 import { db } from "~/server/db";
-import { slots as slotsTable } from "~/server/db/schema";
+import { slots as slotsTable, slot_classes as slotClassesTable } from "~/server/db/schema";
 import type { Slot } from "~/server/db/types";
 import { and, eq, gt, gte, lt, lte, ne, or } from "drizzle-orm"; // Adjust based on your Drizzle setup
 import { auth } from "@clerk/nextjs/server";
@@ -185,7 +185,6 @@ export async function updateSlot(slotDataFromClientForm: UpdateSlotInput) {
 }
 
 export async function deleteSlot(slot_id: string) {
-  console.log("🚀 ~ deleteSlot ~ slot_id:", slot_id)
   // Authenticate the user
   const { userId } = auth();
   if (!userId) throw new Error("User not authenticated");
@@ -207,6 +206,121 @@ export async function deleteSlot(slot_id: string) {
     return { 
       success: false, 
       message: "Failed to delete slot due to a server error." 
+    };
+  }
+}
+
+export async function moveSlotClass(
+  classId: string,
+  newSlotId: string,
+  timetableId: string,
+  year: number,
+  weekNumber: number
+) {
+  const { userId } = auth();
+  if (!userId) throw new Error("User not authenticated");
+
+  try {
+    await db.transaction(async (trx) => {
+      // Delete the old slot_class entry for the target week
+      await trx
+        .delete(slotClassesTable)
+        .where(
+          and(
+            eq(slotClassesTable.user_id, userId),
+            eq(slotClassesTable.class_id, classId),
+            eq(slotClassesTable.year, year),
+            eq(slotClassesTable.week_number, weekNumber)
+          )
+        );
+
+      // Create a new slot_class entry for the target week
+      await trx.insert(slotClassesTable).values({
+        id: generateUuidWithPrefix("slot_class_"), // ID generation remains
+        user_id: userId,
+        timetable_id: timetableId,
+        slot_id: newSlotId,
+        class_id: classId,
+        year,
+        week_number: weekNumber,
+        size: "whole",
+      });
+    });
+
+    // Fetch the updated slotClasses for the current week
+    const updatedSlotClassesForWeek = await db
+      .select()
+      .from(slotClassesTable)
+      .where(
+        and(
+          eq(slotClassesTable.timetable_id, timetableId),
+          eq(slotClassesTable.year, year),
+          eq(slotClassesTable.week_number, weekNumber)
+        )
+      );
+
+    return {
+      success: true,
+      message: "Class moved successfully.",
+      slotClassesForWeek: updatedSlotClassesForWeek,
+    };
+  } catch (error) {
+    console.error("Error moving slot_class:", error);
+    return {
+      success: false,
+      message: "Failed to move class due to a server error.",
+    };
+  }
+}
+
+export async function removeSlotClassFromAllSlots(
+  classId: string,
+  timetableId: string,
+  year: number,
+  weekNumber: number
+) {
+  const { userId } = auth();
+  if (!userId) throw new Error("User not authenticated");
+
+  try {
+    await db
+      .delete(slotClassesTable)
+      .where(
+        and(
+          eq(slotClassesTable.user_id, userId),
+          eq(slotClassesTable.class_id, classId),
+          eq(slotClassesTable.year, year),
+          eq(slotClassesTable.week_number, weekNumber)
+        )
+      );
+
+    // Fetch the updated slotClasses for the current week
+    const updatedSlotClassesForWeek = await db
+      .select()
+      .from(slotClassesTable)
+      .where(
+        and(
+          eq(slotClassesTable.timetable_id, timetableId),
+          eq(slotClassesTable.year, year),
+          eq(slotClassesTable.week_number, weekNumber)
+        )
+      );
+
+    return {
+      success: true,
+      message:
+        "Class removed from all slots for the target week successfully.",
+      slotClassesForWeek: updatedSlotClassesForWeek,
+    };
+  } catch (error) {
+    console.error(
+      "Error removing slot_class from slots for the target week:",
+      error
+    );
+    return {
+      success: false,
+      message:
+        "Failed to remove class from slots for the target week due to a server error.",
     };
   }
 }
