@@ -46,6 +46,7 @@ import {
   getYearAndWeekNumber,
 } from "./utils";
 import RichTextModal from "./components/text-editor/RichTextModal";
+import DisplayClassDetails from "./components/DisplayClassDetails";
 
 export default function TimetablePage() {
   const params = useParams();
@@ -80,10 +81,11 @@ export default function TimetablePage() {
   const [unassignedClassesForCurrentWeek, setUnassignedClassesForCurrentWeek] =
     useState<Class[]>([]);
   const [showWeekView, setShowWeekView] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<SlotClass | null>(null);
   const [selectedClassDetails, setSelectedClassDetails] =
     useState<Class | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Controls RichTextModal
+  const [isDisplayDialogOpen, setIsDisplayDialogOpen] = useState(false); // Controls DisplayClassDetails
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -91,33 +93,6 @@ export default function TimetablePage() {
       activationConstraint: { delay: 300, tolerance: 8 },
     }),
   );
-
-  const handleClassClick = (classData: SlotClass | Class) => {
-    if ("slot_id" in classData) {
-      // It's a SlotClass
-      setSelectedClass(classData);
-      const classDetails =
-        selectedTimetable?.classes.find(
-          (c) => c.class_id === classData.class_id,
-        ) ?? null;
-      setSelectedClassDetails(classDetails);
-    } else {
-      // It's a Class
-      // Find if this class has any existing SlotClass for the current week
-      const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
-      const existingSlotClass =
-        selectedTimetable?.slotClasses?.find(
-          (sc) =>
-            sc.class_id === classData.class_id &&
-            sc.year === year &&
-            sc.week_number === weekNumber,
-        ) ?? null;
-
-      setSelectedClass(existingSlotClass);
-      setSelectedClassDetails(classData);
-    }
-    setIsModalOpen(true);
-  };
 
   // Update the handleSaveClassDetails function to handle both new and existing slot classes
   const handleSaveClassDetails = async (updatedSlotClass: SlotClass) => {
@@ -443,6 +418,61 @@ export default function TimetablePage() {
     );
   }
 
+  const handleClassClick = (classData: SlotClass | Class) => {
+    if ("slot_id" in classData) {
+      // It's a SlotClass
+      setSelectedClass(classData);
+      const classDetails =
+        selectedTimetable?.classes.find(
+          (c) => c.class_id === classData.class_id,
+        ) ?? null;
+      setSelectedClassDetails(classDetails);
+    } else {
+      // It's a Class
+      // Find if this class has any existing SlotClass for the current week
+      const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
+      const existingSlotClass =
+        selectedTimetable?.slotClasses?.find(
+          (sc) =>
+            sc.class_id === classData.class_id &&
+            sc.year === year &&
+            sc.week_number === weekNumber,
+        ) ?? null;
+
+      setSelectedClass(existingSlotClass);
+      setSelectedClassDetails(classData);
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleDisplayClick = (classData: Class | SlotClass) => {
+    if ("slot_id" in classData) {
+      // It's a SlotClass
+      setSelectedClass(classData);
+      const classDetails =
+        selectedTimetable?.classes.find(
+          (c) => c.class_id === classData.class_id,
+        ) ?? null;
+      setSelectedClassDetails(classDetails);
+    } else {
+      // It's a Class
+      // Find if this class has any existing SlotClass for the current week
+      const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
+      const existingSlotClass =
+        selectedTimetable?.slotClasses?.find(
+          (sc) =>
+            sc.class_id === classData.class_id &&
+            sc.year === year &&
+            sc.week_number === weekNumber,
+        ) ?? null;
+
+      setSelectedClass(existingSlotClass);
+      setSelectedClassDetails(classData);
+    }
+
+    setIsDisplayDialogOpen(true);
+  };
+
   return (
     <ContentLayout title="Timetables">
       <Suspense fallback={<LoadingPage />}>
@@ -453,6 +483,13 @@ export default function TimetablePage() {
           classDetails={selectedClassDetails}
           onSave={handleSaveClassDetails}
         />
+        <DisplayClassDetails
+          classItem={selectedClass}
+          classDetails={selectedClassDetails}
+          isOpen={isDisplayDialogOpen}
+          onClose={() => setIsDisplayDialogOpen(false)}
+        />
+
         <DndContext
           sensors={sensors}
           modifiers={[restrictToWindowEdges]}
@@ -483,6 +520,7 @@ export default function TimetablePage() {
                   onDelete={handleDeleteClass}
                   timetableId={selectedTimetable.timetable_id}
                   onClassClick={handleClassClick}
+                  onDisplayClick={handleDisplayClick}
                 />
               </div>
               <div className="col-span-3">
@@ -523,6 +561,7 @@ export default function TimetablePage() {
                     currentWeekStart={currentWeekStart}
                     onWeekChange={handleWeekChange}
                     onClassClick={handleClassClick}
+                    onDisplayClick={handleDisplayClick}
                   />
                 ) : (
                   <DayCarousel
@@ -548,6 +587,7 @@ export default function TimetablePage() {
                     currentWeekStart={currentWeekStart}
                     onWeekChange={handleWeekChange}
                     onClassClick={handleClassClick}
+                    onDisplayClick={handleDisplayClick}
                   />
                 )}
               </div>

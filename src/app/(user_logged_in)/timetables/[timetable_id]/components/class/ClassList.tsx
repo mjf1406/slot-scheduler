@@ -9,6 +9,7 @@ interface ClassListProps {
   onDelete: (id: string) => Promise<void>;
   onClassClick: (classData: SlotClass | Class) => void;
   timetableId: string;
+  onDisplayClick: (classData: Class | SlotClass) => void; // Add this new prop
 }
 
 const ClassList: React.FC<ClassListProps> = ({
@@ -16,6 +17,7 @@ const ClassList: React.FC<ClassListProps> = ({
   onEdit,
   onDelete,
   onClassClick,
+  onDisplayClick,
   timetableId,
 }) => {
   const [classItems, setClassItems] = useState<Class[]>(classes);
@@ -50,6 +52,7 @@ const ClassList: React.FC<ClassListProps> = ({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onClick={onClassClick}
+                  onDisplayClick={onDisplayClick}
                   timetableId={timetableId}
                 />
               ),

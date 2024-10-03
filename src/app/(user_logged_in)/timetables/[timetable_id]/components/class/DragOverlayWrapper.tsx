@@ -39,6 +39,9 @@ const DragOverlayWrapper: React.FC = () => {
           onClick={async () => {
             // This is disabled during drag
           }}
+          onDisplayClick={async () => {
+            // This is disabled during drag
+          }}
         />
       </div>
     </DragOverlay>

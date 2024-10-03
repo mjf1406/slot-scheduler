@@ -17,6 +17,7 @@ interface TimeSlotProps {
   onEditClass: (updatedClass: Class) => Promise<void>;
   onDeleteClass: (id: string) => Promise<void>;
   onClassClick: (classData: Class) => void;
+  onDisplayClick: (classData: Class) => void; // Add this new prop
 }
 
 export const TimeSlot: React.FC<TimeSlotProps> = ({
@@ -30,6 +31,7 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
   onEditClass,
   onDeleteClass,
   onClassClick,
+  onDisplayClick,
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -67,12 +69,14 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
       {classes.map((classItem) => (
         <div key={classItem.class_id} className="flex h-full flex-col">
           <ClassItem
+            key={classItem.class_id}
             classData={classItem}
             onEdit={onEditClass}
             onDelete={onDeleteClass}
+            onClick={onClassClick}
+            onDisplayClick={onDisplayClick}
             timetableId={slot.timetable_id}
             size="small"
-            onClick={onClassClick}
           />
         </div>
       ))}

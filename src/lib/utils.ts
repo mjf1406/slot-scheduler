@@ -1,6 +1,22 @@
 import { type ClassValue, clsx } from "clsx"
 import { randomUUID } from "crypto"
 import { twMerge } from "tailwind-merge"
+import DOMPurify from 'dompurify';
+
+export const sanitizeHtml = (html: string) => {
+  return DOMPurify.sanitize(html);
+};
+
+export const formatDate = (date: Date): string => {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  const dayName = days[date.getDay()];
+  const monthName = months[date.getMonth()];
+  const day = date.getDate();
+
+  return `${dayName}, ${monthName} ${day}`;
+};
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))

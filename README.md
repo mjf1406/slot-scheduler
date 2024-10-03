@@ -17,12 +17,11 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 ### p0
 
-- all items to be added to each class, like a "Things we're doing today". It duplicates how I use Obsidian Canvas for each block.
-
 ## Change Log
 
 2024/10/03
 
+- added: can add details for a specific class on specific day/week and then click display to make it all nice on the screen for display during class
 - added: the user can easily return to the current week by clicking the button
 - added: user can now move classes to timeslots and they will stay when moving to another week and load correctly when reloading the page
 - added: can add class details for a given class in a given week, should use to set up the schedule for that class for that day

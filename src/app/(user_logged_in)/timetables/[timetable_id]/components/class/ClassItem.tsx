@@ -29,6 +29,7 @@ interface ClassItemProps {
   onEdit: (updatedClass: Class) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClick: (classData: Class) => void;
+  onDisplayClick: (classData: Class) => void; // Add this new prop
   timetableId: string;
   size?: "small" | "normal";
   isDragging?: boolean;
@@ -39,6 +40,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   onEdit,
   onDelete,
   onClick,
+  onDisplayClick,
   size = "normal",
   isDragging = false,
 }) => {
@@ -58,6 +60,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDisplayDialogOpen, setIsDisplayDialogOpen] = useState(false);
   const { theme } = useTheme();
 
   const textColorClass = useMemo(() => {
@@ -83,6 +86,11 @@ const ClassItem: React.FC<ClassItemProps> = ({
 
   const handleDetailsClick = () => {
     onClick(classData);
+    setIsDropdownOpen(false);
+  };
+
+  const handleDisplayClick = () => {
+    onDisplayClick(classData);
     setIsDropdownOpen(false);
   };
 
@@ -154,11 +162,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
             <DropdownMenuItem onSelect={handleDetailsClick}>
               <FileText size={16} className="mr-2" /> Details
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => {
-                /* TODO: Add functionality */
-              }}
-            >
+            <DropdownMenuItem onSelect={handleDisplayClick}>
               <Monitor size={16} className="mr-2" /> Display
             </DropdownMenuItem>
             <DropdownMenuItem
