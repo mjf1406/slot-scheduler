@@ -47,11 +47,13 @@ import {
 } from "./utils";
 import RichTextModal from "./components/text-editor/RichTextModal";
 import DisplayClassDetails from "./components/DisplayClassDetails";
+import { useToast } from "~/components/ui/use-toast";
 
 export default function TimetablePage() {
   const params = useParams();
   const timetableId = params.timetable_id as string;
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: timetables } = useSuspenseQuery(timetablesOptions);
 
   // Derive selectedTimetable directly from the query data
@@ -177,7 +179,112 @@ export default function TimetablePage() {
     setCurrentWeekStart(newWeekStart);
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  // const handleDragEnd = async (event: DragEndEvent) => {
+  //   const { active, over } = event;
+  //   if (!over || !selectedTimetable) return;
+
+  //   const activeData = active.data.current as { type: string; class?: Class };
+  //   const overData = over.data.current as { type: string; slot?: Slot };
+
+  //   if (activeData.type === "ClassItem" && activeData.class) {
+  //     const droppedClass = activeData.class;
+  //     const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
+
+  //     if (overData.type === "TimeSlot" && overData.slot) {
+  //       const targetSlot = overData.slot;
+
+  //       // Update the server
+  //       const response = await moveSlotClass(
+  //         droppedClass.class_id,
+  //         targetSlot.slot_id,
+  //         selectedTimetable.timetable_id,
+  //         year,
+  //         weekNumber,
+  //       );
+
+  //       if (response.success && response.slotClassesForWeek) {
+  //         // Update the query cache with the new slotClasses for the current week
+  //         queryClient.setQueryData(
+  //           timetablesOptions.queryKey,
+  //           (oldData: Timetable[] | undefined) =>
+  //             oldData?.map((timetable) => {
+  //               if (timetable.timetable_id === selectedTimetable.timetable_id) {
+  //                 // Merge existing slotClasses with the updated ones for the current week
+  //                 const otherSlotClasses = (timetable.slotClasses ?? []).filter(
+  //                   (sc) => sc.year !== year || sc.week_number !== weekNumber,
+  //                 );
+
+  //                 // Remove duplicates based on slotClass IDs
+  //                 const allSlotClasses = [
+  //                   ...otherSlotClasses,
+  //                   ...response.slotClassesForWeek,
+  //                 ];
+  //                 const uniqueSlotClasses = Array.from(
+  //                   new Map(allSlotClasses.map((sc) => [sc.id, sc])).values(),
+  //                 );
+
+  //                 return {
+  //                   ...timetable,
+  //                   slotClasses: uniqueSlotClasses,
+  //                 };
+  //               }
+  //               return timetable;
+  //             }),
+  //         );
+  //         updateClassesForWeek();
+  //       } else {
+  //         console.error("Failed to move class:", response.message);
+  //       }
+  //     } else if (
+  //       overData.type === "UnassignedArea" ||
+  //       overData.type === "ClassItem"
+  //     ) {
+  //       // Update the server
+  //       const response = await removeSlotClassFromAllSlots(
+  //         droppedClass.class_id,
+  //         selectedTimetable.timetable_id,
+  //         year,
+  //         weekNumber,
+  //       );
+
+  //       if (response.success && response.slotClassesForWeek) {
+  //         // Update the query cache with the new slotClasses for the current week
+  //         queryClient.setQueryData(
+  //           timetablesOptions.queryKey,
+  //           (oldData: Timetable[] | undefined) =>
+  //             oldData?.map((timetable) => {
+  //               if (timetable.timetable_id === selectedTimetable.timetable_id) {
+  //                 // Merge existing slotClasses with the updated ones for the current week
+  //                 const otherSlotClasses = (timetable.slotClasses ?? []).filter(
+  //                   (sc) => sc.year !== year || sc.week_number !== weekNumber,
+  //                 );
+
+  //                 // Remove duplicates
+  //                 const allSlotClasses = [
+  //                   ...otherSlotClasses,
+  //                   ...response.slotClassesForWeek,
+  //                 ];
+  //                 const uniqueSlotClasses = Array.from(
+  //                   new Map(allSlotClasses.map((sc) => [sc.id, sc])).values(),
+  //                 );
+
+  //                 return {
+  //                   ...timetable,
+  //                   slotClasses: uniqueSlotClasses,
+  //                 };
+  //               }
+  //               return timetable;
+  //             }),
+  //         );
+  //         updateClassesForWeek();
+  //       } else {
+  //         console.error("Failed to remove class from slots:", response.message);
+  //       }
+  //     }
+  //   }
+  // };
+
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || !selectedTimetable) return;
 
@@ -188,96 +295,184 @@ export default function TimetablePage() {
       const droppedClass = activeData.class;
       const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
 
+      // Keep a snapshot of the previous state
+      const previousTimetableData = queryClient.getQueryData<Timetable[]>(
+        timetablesOptions.queryKey,
+      );
+
       if (overData.type === "TimeSlot" && overData.slot) {
         const targetSlot = overData.slot;
 
-        // Update the server
-        const response = await moveSlotClass(
+        // Optimistically update the cache
+        queryClient.setQueryData<Timetable[]>(
+          timetablesOptions.queryKey,
+          (oldData) =>
+            oldData?.map((timetable) => {
+              if (timetable.timetable_id === selectedTimetable.timetable_id) {
+                // Remove any existing slotClasses for this class in the current week
+                const otherSlotClasses = (timetable.slotClasses ?? []).filter(
+                  (sc) =>
+                    sc.class_id !== droppedClass.class_id ||
+                    sc.year !== year ||
+                    sc.week_number !== weekNumber,
+                );
+
+                // Add the new slotClass
+                const newSlotClass: SlotClass = {
+                  id: `${droppedClass.class_id}-${targetSlot.slot_id}-${year}-${weekNumber}`,
+                  class_id: droppedClass.class_id,
+                  slot_id: targetSlot.slot_id,
+                  timetable_id: selectedTimetable.timetable_id,
+                  user_id: selectedTimetable.user_id,
+                  year: year,
+                  week_number: weekNumber,
+                  size: "whole", // Set default size as "whole" or "split"
+                };
+
+                const allSlotClasses = [...otherSlotClasses, newSlotClass];
+
+                return {
+                  ...timetable,
+                  slotClasses: allSlotClasses,
+                };
+              }
+              return timetable;
+            }),
+        );
+
+        // Update classes for the current week
+        updateClassesForWeek();
+
+        // Make the server call without awaiting
+        moveSlotClass(
           droppedClass.class_id,
           targetSlot.slot_id,
           selectedTimetable.timetable_id,
           year,
           weekNumber,
-        );
-
-        if (response.success && response.slotClassesForWeek) {
-          // Update the query cache with the new slotClasses for the current week
-          queryClient.setQueryData(
-            timetablesOptions.queryKey,
-            (oldData: Timetable[] | undefined) =>
-              oldData?.map((timetable) => {
-                if (timetable.timetable_id === selectedTimetable.timetable_id) {
-                  // Merge existing slotClasses with the updated ones for the current week
-                  const otherSlotClasses = (timetable.slotClasses ?? []).filter(
-                    (sc) => sc.year !== year || sc.week_number !== weekNumber,
-                  );
-
-                  // Remove duplicates based on slotClass IDs
-                  const allSlotClasses = [
-                    ...otherSlotClasses,
-                    ...response.slotClassesForWeek,
-                  ];
-                  const uniqueSlotClasses = Array.from(
-                    new Map(allSlotClasses.map((sc) => [sc.id, sc])).values(),
-                  );
-
-                  return {
-                    ...timetable,
-                    slotClasses: uniqueSlotClasses,
-                  };
-                }
-                return timetable;
-              }),
-          );
-          updateClassesForWeek();
-        } else {
-          console.error("Failed to move class:", response.message);
-        }
+        )
+          .then((response) => {
+            if (response.success) {
+              // Optionally, update the cache with the server response
+              // Show success toast
+              toast({
+                title: "Success",
+                description: "Class moved successfully.",
+              });
+            } else {
+              // Revert the cache
+              if (previousTimetableData) {
+                queryClient.setQueryData<Timetable[]>(
+                  timetablesOptions.queryKey,
+                  previousTimetableData,
+                );
+                updateClassesForWeek();
+              }
+              // Show error toast
+              toast({
+                title: "Error",
+                description: `Failed to move class: ${response.message}`,
+                variant: "destructive",
+              });
+            }
+          })
+          .catch((error: unknown) => {
+            // Revert the cache
+            if (previousTimetableData) {
+              queryClient.setQueryData<Timetable[]>(
+                timetablesOptions.queryKey,
+                previousTimetableData,
+              );
+              updateClassesForWeek();
+            }
+            // Show error toast
+            toast({
+              title: "Error",
+              description: `Failed to move class: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+              variant: "destructive",
+            });
+          });
       } else if (
         overData.type === "UnassignedArea" ||
         overData.type === "ClassItem"
       ) {
-        // Update the server
-        const response = await removeSlotClassFromAllSlots(
+        // Optimistically remove the class from all slots
+        queryClient.setQueryData<Timetable[]>(
+          timetablesOptions.queryKey,
+          (oldData) =>
+            oldData?.map((timetable) => {
+              if (timetable.timetable_id === selectedTimetable.timetable_id) {
+                const updatedSlotClasses = (timetable.slotClasses ?? []).filter(
+                  (sc) =>
+                    sc.class_id !== droppedClass.class_id ||
+                    sc.year !== year ||
+                    sc.week_number !== weekNumber,
+                );
+
+                return {
+                  ...timetable,
+                  slotClasses: updatedSlotClasses,
+                };
+              }
+              return timetable;
+            }),
+        );
+
+        // Update classes for the current week
+        updateClassesForWeek();
+
+        // Make the server call without awaiting
+        removeSlotClassFromAllSlots(
           droppedClass.class_id,
           selectedTimetable.timetable_id,
           year,
           weekNumber,
-        );
-
-        if (response.success && response.slotClassesForWeek) {
-          // Update the query cache with the new slotClasses for the current week
-          queryClient.setQueryData(
-            timetablesOptions.queryKey,
-            (oldData: Timetable[] | undefined) =>
-              oldData?.map((timetable) => {
-                if (timetable.timetable_id === selectedTimetable.timetable_id) {
-                  // Merge existing slotClasses with the updated ones for the current week
-                  const otherSlotClasses = (timetable.slotClasses ?? []).filter(
-                    (sc) => sc.year !== year || sc.week_number !== weekNumber,
-                  );
-
-                  // Remove duplicates
-                  const allSlotClasses = [
-                    ...otherSlotClasses,
-                    ...response.slotClassesForWeek,
-                  ];
-                  const uniqueSlotClasses = Array.from(
-                    new Map(allSlotClasses.map((sc) => [sc.id, sc])).values(),
-                  );
-
-                  return {
-                    ...timetable,
-                    slotClasses: uniqueSlotClasses,
-                  };
-                }
-                return timetable;
-              }),
-          );
-          updateClassesForWeek();
-        } else {
-          console.error("Failed to remove class from slots:", response.message);
-        }
+        )
+          .then((response) => {
+            if (response.success) {
+              // Optionally, update the cache with the server response
+              // Show success toast
+              toast({
+                title: "Success",
+                description: "Class removed from slots successfully.",
+              });
+            } else {
+              // Revert the cache
+              if (previousTimetableData) {
+                queryClient.setQueryData<Timetable[]>(
+                  timetablesOptions.queryKey,
+                  previousTimetableData,
+                );
+                updateClassesForWeek();
+              }
+              // Show error toast
+              toast({
+                title: "Error",
+                description: `Failed to remove class from slots: ${response.message}`,
+                variant: "destructive",
+              });
+            }
+          })
+          .catch((error: unknown) => {
+            // Revert the cache
+            if (previousTimetableData) {
+              queryClient.setQueryData<Timetable[]>(
+                timetablesOptions.queryKey,
+                previousTimetableData,
+              );
+              updateClassesForWeek();
+            }
+            // Show error toast
+            toast({
+              title: "Error",
+              description: `Failed to remove class from slots: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+              variant: "destructive",
+            });
+          });
       }
     }
   };
