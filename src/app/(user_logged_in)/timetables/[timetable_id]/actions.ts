@@ -221,31 +221,43 @@ export async function moveSlotClass(
   if (!userId) throw new Error("User not authenticated");
 
   try {
-    await db.transaction(async (trx) => {
-      // Delete the old slot_class entry for the target week
-      await trx
-        .delete(slotClassesTable)
-        .where(
-          and(
-            eq(slotClassesTable.user_id, userId),
-            eq(slotClassesTable.class_id, classId),
-            eq(slotClassesTable.year, year),
-            eq(slotClassesTable.week_number, weekNumber)
-          )
-        );
+    let updatedSlotClass;
 
-      // Create a new slot_class entry for the target week
-      await trx.insert(slotClassesTable).values({
-        id: generateUuidWithPrefix("slot_class_"), // ID generation remains
-        user_id: userId,
-        timetable_id: timetableId,
-        slot_id: newSlotId,
-        class_id: classId,
-        year,
-        week_number: weekNumber,
-        size: "whole",
-      });
-    });
+    // Update the slot_id of the existing slot_class entry
+    const updatedSlotClasses = await db
+      .update(slotClassesTable)
+      .set({ slot_id: newSlotId })
+      .where(
+        and(
+          eq(slotClassesTable.user_id, userId),
+          eq(slotClassesTable.class_id, classId),
+          eq(slotClassesTable.year, year),
+          eq(slotClassesTable.week_number, weekNumber)
+        )
+      )
+      .returning();
+
+    if (updatedSlotClasses.length > 0) {
+      updatedSlotClass = updatedSlotClasses[0];
+    } else {
+      // If no existing slot_class entry, create a new one with default values
+      const [newSlotClass] = await db
+        .insert(slotClassesTable)
+        .values({
+          id: generateUuidWithPrefix("slot_class_"),
+          user_id: userId,
+          timetable_id: timetableId,
+          slot_id: newSlotId,
+          class_id: classId,
+          year,
+          week_number: weekNumber,
+          size: "whole",
+          text: '', // Initialize text as empty or null
+        })
+        .returning();
+
+      updatedSlotClass = newSlotClass;
+    }
 
     // Fetch the updated slotClasses for the current week
     const updatedSlotClassesForWeek = await db
@@ -273,6 +285,7 @@ export async function moveSlotClass(
   }
 }
 
+
 export async function removeSlotClassFromAllSlots(
   classId: string,
   timetableId: string,
@@ -284,7 +297,8 @@ export async function removeSlotClassFromAllSlots(
 
   try {
     await db
-      .delete(slotClassesTable)
+      .update(slotClassesTable)
+      .set({ slot_id: null })
       .where(
         and(
           eq(slotClassesTable.user_id, userId),

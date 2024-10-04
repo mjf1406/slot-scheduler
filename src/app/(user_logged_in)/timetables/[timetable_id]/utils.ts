@@ -98,24 +98,18 @@ export function getClassesForWeek(
   return timetable.classes.filter((cls) => assignedClassIds.has(cls.class_id));
 }
 
-export function getUnassignedClassesForWeek(
-  timetable: Timetable,
-  currentWeekStart: Date
-): Class[] {
-  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
-
-  const assignedClassIds = new Set(
-    (timetable.slotClasses ?? [])
-      .filter(
-        (slotClass) =>
-          slotClass.year === year && slotClass.week_number === weekNumber
-      )
-      .map((slotClass) => slotClass.class_id)
-  );
-
-  return timetable.classes.filter(
-    (cls) => !assignedClassIds.has(cls.class_id)
-  );
+export function getUnassignedClassesForWeek(timetable: Timetable, weekStart: Date): Class[] {
+  const { year, weekNumber } = getYearAndWeekNumber(weekStart);
+  return timetable.classes.filter((cls) => {
+    const slotClass = timetable.slotClasses?.find(
+      (sc) =>
+        sc.class_id === cls.class_id &&
+        sc.year === year &&
+        sc.week_number === weekNumber,
+    );
+    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+    return !slotClass || slotClass.slot_id === null;
+  });
 }
 
 export function calculateDateFromDay(day: string, weekStart: Date): Date {

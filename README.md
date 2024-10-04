@@ -17,10 +17,15 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 ### p0
 
+- BUG: can now edit the details of a class when it is unassigned
+- BUG: when moving a class from a slot to unassigned and back into a slot, the slot no longer loses its dnd functionality
+
 ## Change Log
 
 2024/10/04
 
+- fixed: timeslots are now optimistically rendered and deleted
+- fixed: moving a classitem to a new timeslot or unassigned classes no longer deletes the text
 - UX: switched to [optimistic queries](https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates) so the UI updates before saving to the server
 - fixed: when creating/editing a class, the icon and color can now be selected again
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "~/components/ui/button";
@@ -66,14 +66,40 @@ export function CreateSlotDialog({
     },
   });
 
+  // const handleCreateSlot = async (values: SlotFormValues) => {
+  //   try {
+  //     for (const day of values.days) {
+  //       await onCreateSlot({
+  //         day,
+  //         start_time: values.start_time,
+  //         end_time: values.end_time,
+  //       });
+  //     }
+  //     setOpen(false);
+  //     form.reset();
+  //     toast({
+  //       title: "Success",
+  //       description: "Slots created successfully",
+  //     });
+  //   } catch (error) {
+  //     console.error("Error creating slots:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to create slots",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
+
   const handleCreateSlot = async (values: SlotFormValues) => {
     try {
       for (const day of values.days) {
-        await onCreateSlot({
+        const newSlot = {
           day,
           start_time: values.start_time,
           end_time: values.end_time,
-        });
+        };
+        await onCreateSlot(newSlot);
       }
       setOpen(false);
       form.reset();

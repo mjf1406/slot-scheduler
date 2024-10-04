@@ -44,10 +44,10 @@ export type Class = {
 };
 
 export type SlotClass = {
-    id: string;
+    id?: string;
     user_id: string;
     timetable_id: string;
-    slot_id: string;
+    slot_id: string | null;
     class_id: string;
     week_number: number;
     year: number;
