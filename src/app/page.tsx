@@ -1,14 +1,15 @@
-import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { ContentLayout } from "~/components/admin-panel/content-layout";
 import FrequentlyAskedQuestions from "~/components/brand/FAQ";
-import LoadingButton from "~/components/LoadingButton";
+import { Navbar } from "~/components/home-page/navbar";
 import { Button } from "~/components/ui/button";
+
+export const dynamic = "force-static";
 
 export default function HomePage() {
   return (
-    <ContentLayout title="Slotted">
+    <>
+      <Navbar />
       <main className="flex min-h-screen flex-col items-center justify-center gap-32 bg-background p-5 text-foreground">
         <div
           id="hero"
@@ -25,18 +26,12 @@ export default function HomePage() {
             drag-and-drop functionality to organize them.
           </div>
           <div className="space-x-4">
-            <SignedOut>
-              <LoadingButton href="/timetables">
+            <Button asChild>
+              <Link href={"/timetables"}>
                 Get Started{" "}
                 <ArrowRight className="ml-0.5 inline-block h-5 w-5" />
-              </LoadingButton>
-            </SignedOut>
-            <SignedIn>
-              <LoadingButton href="/timetables">
-                Timetables{" "}
-                <ArrowRight className="ml-0.5 inline-block h-5 w-5" />
-              </LoadingButton>
-            </SignedIn>
+              </Link>
+            </Button>
             <Button asChild variant={"secondary"}>
               <Link href={"#features"}>Learn more</Link>
             </Button>
@@ -54,6 +49,6 @@ export default function HomePage() {
         </div>
         <FrequentlyAskedQuestions />
       </main>
-    </ContentLayout>
+    </>
   );
 }
