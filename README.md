@@ -24,6 +24,7 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 2024/10/04
 
+- UX: if there are no classes in a timetable, a Add example classes button appears and if clicked, will add the 8 classes in `constants.ts`
 - fixed: timeslots are now optimistically rendered and deleted
 - fixed: moving a classitem to a new timeslot or unassigned classes no longer deletes the text
 - UX: switched to [optimistic queries](https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates) so the UI updates before saving to the server

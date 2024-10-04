@@ -2,10 +2,11 @@
 
 import { generateUuidWithPrefix } from "~/lib/utils";
 import { db } from "~/server/db";
-import { slots as slotsTable, slot_classes as slotClassesTable } from "~/server/db/schema";
-import type { Slot, SlotClass } from "~/server/db/types";
+import { slots as slotsTable, slot_classes as slotClassesTable, classes } from "~/server/db/schema";
+import type { Class, Slot, SlotClass } from "~/server/db/types";
 import { and, eq, gt, gte, lt, lte, ne, or } from "drizzle-orm"; // Adjust based on your Drizzle setup
 import { auth } from "@clerk/nextjs/server";
+import { EXAMPLE_CLASSES } from "~/lib/constants";
 
 interface AddSlotInput {
   timetable_id: string;
@@ -394,4 +395,20 @@ export async function updateSlotClass(slotClass: SlotClass) {
       message: "Failed to update slot class"
     };
   }
+}
+
+export async function addExampleClasses(timetableId: string): Promise<Class[]> {
+  const { userId } = auth();
+  if (!userId) throw new Error("User not authenticated");
+
+  const newClasses = EXAMPLE_CLASSES.map((cls) => ({
+    ...cls,
+    user_id: userId,
+    timetable_id: timetableId,
+    class_id: generateUuidWithPrefix("class_"),
+  }));
+
+  await db.insert(classes).values(newClasses);
+
+  return newClasses;
 }
