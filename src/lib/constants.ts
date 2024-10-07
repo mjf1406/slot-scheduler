@@ -54,7 +54,7 @@ export const LOADING_MESSAGES: string[] = [
     "Hold tight, learning heroes!",
     "Almost there! Get ready to explore!",
   ];
-export const MINUTE_SIZE_PIXELS = 1
+export const MINUTE_SIZE_PIXELS = 1.75
 export const HOUR_SIZE_PIXELS = MINUTE_SIZE_PIXELS * 60
 export const EXAMPLE_CLASSES: Omit<Class, 'user_id' | 'timetable_id' | 'class_id'>[] = [
   { name: 'Grammar', color: '#ff6767', icon_name: 'spell-check', icon_prefix: 'fas' },

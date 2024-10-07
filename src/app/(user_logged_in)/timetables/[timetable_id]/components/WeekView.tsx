@@ -3,10 +3,10 @@
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { calculateDuration } from "~/lib/utils";
+import { calculateDuration, cn } from "~/lib/utils";
 import type { Slot, Class, SlotClass } from "~/server/db/types";
 import { TimeSlot } from "./slot/TimeSlot";
-import { HOUR_SIZE_PIXELS } from "~/lib/constants";
+import { HOUR_SIZE_PIXELS, MINUTE_SIZE_PIXELS } from "~/lib/constants";
 import ClassItem from "./class/ClassItem";
 
 interface ExtendedClass extends Class {
@@ -109,14 +109,12 @@ export default function WeekView({
       return { top: "0px", height: "0px" };
     }
 
-    const top =
-      (startHour + startMinute / HOUR_SIZE_PIXELS - start_time) *
-      HOUR_SIZE_PIXELS;
-    const height =
-      (endHour +
-        endMinute / HOUR_SIZE_PIXELS -
-        (startHour + startMinute / HOUR_SIZE_PIXELS)) *
-      HOUR_SIZE_PIXELS;
+    const startMinutes = startHour * 60 + startMinute;
+    const endMinutes = endHour * 60 + endMinute;
+    const startTimeMinutes = start_time * 60;
+
+    const top = (startMinutes - startTimeMinutes) * MINUTE_SIZE_PIXELS;
+    const height = (endMinutes - startMinutes) * MINUTE_SIZE_PIXELS;
 
     return {
       top: `${top}px`,
@@ -173,7 +171,8 @@ export default function WeekView({
           {hours.map((hour) => (
             <div
               key={hour}
-              className={`mb-10 h-[${HOUR_SIZE_PIXELS}px] text-right text-sm text-muted-foreground`}
+              style={{ height: `${HOUR_SIZE_PIXELS}px` }}
+              className="text-right text-sm text-muted-foreground"
             >
               {hour === 0
                 ? "12 AM"
@@ -185,6 +184,7 @@ export default function WeekView({
             </div>
           ))}
         </div>
+        {/* Vertical Day Separators */}
         <div
           className="relative col-span-7"
           style={{
@@ -193,6 +193,7 @@ export default function WeekView({
             height: `${(end_time - start_time + 1) * HOUR_SIZE_PIXELS}px`,
           }}
         >
+          {/* Horizontal Hour Separators */}
           {hours.map((hour) => (
             <div
               key={hour}

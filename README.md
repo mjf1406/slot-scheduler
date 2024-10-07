@@ -22,6 +22,10 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 ## Change Log
 
+2024/10/07
+
+- adjusted the pixel size of each minute to 1.75, increasing the height of each time slot
+
 2024/10/04
 
 - UX: if there are no classes in a timetable, a Add example classes button appears and if clicked, will add the 8 classes in `constants.ts`
