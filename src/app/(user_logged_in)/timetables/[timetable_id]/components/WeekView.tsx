@@ -37,7 +37,7 @@ export default function WeekView({
   days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
   timeSlots = [],
   classes = [],
-  slotClasses = [], // Add this new prop
+  slotClasses = [],
   onDeleteSlot,
   onCreateSlot,
   onEditSlot,
@@ -52,7 +52,10 @@ export default function WeekView({
     return (
       <div
         key={classItem.class_id}
-        className="absolute left-0 right-0 overflow-hidden rounded"
+        className={cn(
+          "absolute left-0 right-0 overflow-hidden rounded",
+          isPastTimeSlot(slot) ? "opacity-50" : "",
+        )}
         style={getSlotStyle(slot)}
       >
         <div className="mt-5 flex h-full flex-col">
@@ -61,7 +64,7 @@ export default function WeekView({
             onEdit={onEditClass}
             onDelete={onDeleteClass}
             timetableId={slot.timetable_id}
-            onClick={onClassClick} // Add this line
+            onClick={onClassClick}
             onDisplayClick={onDisplayClick}
           />
         </div>
@@ -131,6 +134,37 @@ export default function WeekView({
     });
   };
 
+  const isPastTimeSlot = (slot: Slot) => {
+    if (!slot.end_time || !slot.day) {
+      return false; // If end_time or day is undefined or empty, consider it not past
+    }
+
+    const now = new Date();
+    const slotDate = new Date(currentWeekStart);
+    const slotDay = days.indexOf(slot.day);
+
+    if (slotDay === -1) {
+      return false; // If the day is not found in the days array, consider it not past
+    }
+
+    slotDate.setDate(slotDate.getDate() + slotDay);
+
+    const timeParts = slot.end_time.split(":");
+    if (timeParts.length !== 2) {
+      return false; // Invalid time format
+    }
+
+    if (!timeParts[0] || !timeParts[1]) return false;
+    const endHour = parseInt(timeParts[0], 10);
+    const endMinute = parseInt(timeParts[1], 10);
+
+    if (!isNaN(endHour) && !isNaN(endMinute)) {
+      slotDate.setHours(endHour, endMinute, 0, 0);
+      return now > slotDate;
+    }
+    return false;
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-4 flex items-center justify-between">
@@ -184,7 +218,6 @@ export default function WeekView({
             </div>
           ))}
         </div>
-        {/* Vertical Day Separators */}
         <div
           className="relative col-span-7"
           style={{
@@ -193,7 +226,6 @@ export default function WeekView({
             height: `${(end_time - start_time + 1) * HOUR_SIZE_PIXELS}px`,
           }}
         >
-          {/* Horizontal Hour Separators */}
           {hours.map((hour) => (
             <div
               key={hour}
@@ -227,8 +259,9 @@ export default function WeekView({
                     timetableDays={days}
                     onEditClass={onEditClass}
                     onDeleteClass={onDeleteClass}
-                    onClassClick={onClassClick} // Change onClick to onClassClick
-                    onDisplayClick={onDisplayClick} // Add this new prop
+                    onClassClick={onClassClick}
+                    onDisplayClick={onDisplayClick}
+                    isPastTimeSlot={isPastTimeSlot}
                   />
                 ))}
             </div>

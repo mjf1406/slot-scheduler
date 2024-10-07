@@ -16,13 +16,15 @@ type CalendarCarouselProps = {
   classes: ExtendedClass[];
   slotClasses: SlotClass[];
   onDeleteSlot: (id: string) => void;
-  onCreateSlot: (slot: Omit<Slot, "id">) => void;
+  onCreateSlot: (
+    slot: Omit<Slot, "id" | "user_id" | "timetable_id">,
+  ) => Promise<void>; // Add this line
   onEditSlot: (slot: Slot, editFuture: boolean) => void;
   onEditClass: (updatedClass: Class) => Promise<void>;
   onDeleteClass: (id: string) => Promise<void>;
   currentWeekStart: Date;
   onWeekChange: (newWeekStart: Date) => void;
-  onClassClick: (classData: Class | SlotClass) => void; // Add this line
+  onClassClick: (classData: Class | SlotClass) => void;
   onDisplayClick: (classData: Class | SlotClass) => void;
 };
 
@@ -36,9 +38,9 @@ export default function DayCarousel({
   days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
   timeSlots = [],
   classes = [],
-  slotClasses = [], // Add this new prop
+  slotClasses = [],
   onDeleteSlot,
-  onCreateSlot,
+  onCreateSlot, // Add this line
   onEditSlot,
   onEditClass,
   onDeleteClass,
@@ -101,13 +103,9 @@ export default function DayCarousel({
       return { top: "0px", height: "0px" };
     }
 
-    const top =
-      (startHour + startMinute / HOUR_SIZE_PIXELS - start_time) *
-      HOUR_SIZE_PIXELS;
+    const top = (startHour + startMinute / 60 - start_time) * HOUR_SIZE_PIXELS;
     const height =
-      (endHour +
-        endMinute / HOUR_SIZE_PIXELS -
-        (startHour + startMinute / HOUR_SIZE_PIXELS)) *
+      (endHour + endMinute / 60 - (startHour + startMinute / 60)) *
       HOUR_SIZE_PIXELS;
 
     return {
@@ -126,6 +124,37 @@ export default function DayCarousel({
       );
       return !!slotClass;
     });
+  };
+
+  const isPastTimeSlot = (slot: Slot) => {
+    if (!slot.end_time || !slot.day) {
+      return false; // If end_time or day is undefined or empty, consider it not past
+    }
+
+    const now = new Date();
+    const slotDate = new Date(currentWeekStart);
+    const slotDay = days.indexOf(slot.day);
+
+    if (slotDay === -1) {
+      return false; // If the day is not found in the days array, consider it not past
+    }
+
+    slotDate.setDate(slotDate.getDate() + slotDay);
+
+    const timeParts = slot.end_time.split(":");
+    if (timeParts.length !== 2) {
+      return false; // Invalid time format
+    }
+
+    if (!timeParts[0] || !timeParts[1]) return false;
+    const endHour = parseInt(timeParts[0], 10);
+    const endMinute = parseInt(timeParts[1], 10);
+
+    if (!isNaN(endHour) && !isNaN(endMinute)) {
+      slotDate.setHours(endHour, endMinute, 0, 0);
+      return now > slotDate;
+    }
+    return false;
   };
 
   return (
@@ -232,8 +261,9 @@ export default function DayCarousel({
                     timetableDays={days}
                     onEditClass={onEditClass}
                     onDeleteClass={onDeleteClass}
-                    onClassClick={onClassClick} // Change onClick to onClassClick
-                    onDisplayClick={onDisplayClick} // Add this new prop
+                    onClassClick={onClassClick}
+                    onDisplayClick={onDisplayClick}
+                    isPastTimeSlot={isPastTimeSlot}
                   />
                 ))}
             </div>

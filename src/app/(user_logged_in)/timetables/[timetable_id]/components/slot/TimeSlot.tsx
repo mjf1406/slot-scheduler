@@ -17,7 +17,8 @@ interface TimeSlotProps {
   onEditClass: (updatedClass: Class) => Promise<void>;
   onDeleteClass: (id: string) => Promise<void>;
   onClassClick: (classData: Class) => void;
-  onDisplayClick: (classData: Class) => void; // Add this new prop
+  onDisplayClick: (classData: Class) => void;
+  isPastTimeSlot: (slot: Slot) => boolean; // Add this new prop
 }
 
 export const TimeSlot: React.FC<TimeSlotProps> = ({
@@ -32,6 +33,7 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
   onDeleteClass,
   onClassClick,
   onDisplayClick,
+  isPastTimeSlot,
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -53,6 +55,8 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
     setIsDropdownOpen(false);
   }, [onDeleteSlot, slot.slot_id]);
 
+  const isPast = isPastTimeSlot(slot);
+
   return (
     <div
       ref={setNodeRef}
@@ -60,6 +64,7 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
       className={cn(
         "absolute left-1 right-1 flex flex-col justify-between overflow-hidden rounded bg-accent/20 p-1",
         { "bg-accent/40": isOver },
+        isPast ? "opacity-50" : "",
       )}
       style={{ ...getSlotStyle(slot), zIndex: 1 }}
     >

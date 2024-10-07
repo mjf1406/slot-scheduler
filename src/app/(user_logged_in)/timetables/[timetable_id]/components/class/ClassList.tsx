@@ -23,7 +23,6 @@ const ClassList: React.FC<ClassListProps> = ({
   timetableId,
 }) => {
   const [classItems, setClassItems] = useState<Class[]>(classes);
-  console.log("🚀 ~ classItems:", classItems);
   const [isAdding, setIsAdding] = useState(false);
 
   const { setNodeRef } = useDroppable({

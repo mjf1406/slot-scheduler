@@ -97,8 +97,6 @@ export default function TimetablePage() {
   );
 
   const handleSaveClassDetails = async (updatedSlotClass: SlotClass) => {
-    console.log("handleSaveClassDetails called with:", updatedSlotClass);
-
     try {
       // First, optimistically update the cache
       queryClient.setQueryData(
@@ -130,7 +128,6 @@ export default function TimetablePage() {
 
       // Then make the server call
       const response = await updateSlotClass(updatedSlotClass);
-      console.log("Server response:", response);
 
       if (!response?.success) {
         // If the server call fails, invalidate the query to refresh the data
