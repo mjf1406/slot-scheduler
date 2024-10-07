@@ -167,7 +167,7 @@ export default function TimetablePage() {
         );
       }
 
-      handleCloseModal();
+      // handleCloseModal();
     } catch (error) {
       console.error("Error updating class:", error);
       // Invalidate the query to refresh the data
@@ -779,18 +779,19 @@ export default function TimetablePage() {
   return (
     <ContentLayout title="Timetables">
       <Suspense fallback={<LoadingPage />}>
-        <RichTextModal
+        {/* <RichTextModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           classItem={selectedClass}
           classDetails={selectedClassDetails}
           onSave={handleSaveClassDetails}
-        />
+        /> */}
         <DisplayClassDetails
           classItem={selectedClass}
           classDetails={selectedClassDetails}
           isOpen={isDisplayDialogOpen}
           onClose={() => setIsDisplayDialogOpen(false)}
+          onSave={handleSaveClassDetails}
         />
 
         <DndContext

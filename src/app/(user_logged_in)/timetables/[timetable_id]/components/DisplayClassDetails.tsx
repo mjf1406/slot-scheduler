@@ -1,8 +1,13 @@
-import React from "react";
-import { X } from "lucide-react";
-import { Dialog, DialogContent } from "~/components/ui/dialog";
+import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
+import { Edit, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Badge } from "~/components/ui/badge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -11,11 +16,15 @@ import type { Class, SlotClass } from "~/server/db/types";
 import { formatDate, sanitizeHtml } from "~/lib/utils";
 import parse, { type DOMNode, Text } from "html-react-parser";
 
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
+
 interface DisplayClassDetailsProps {
   classItem: SlotClass | null;
   classDetails: Class | null;
   isOpen: boolean;
   onClose: () => void;
+  onSave: (updatedClassItem: SlotClass) => Promise<void>;
 }
 
 const HashtagBadge: React.FC<{ tag: string }> = ({ tag }) => (
@@ -32,8 +41,23 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
   classDetails,
   isOpen,
   onClose,
+  onSave,
 }) => {
-  if (!classDetails) return null;
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editorContent, setEditorContent] = useState("");
+  const [localClassItem, setLocalClassItem] = useState<SlotClass | null>(null);
+
+  useEffect(() => {
+    if (isOpen && classItem) {
+      setLocalClassItem(classItem);
+      setEditorContent(classItem.text ?? "");
+    } else {
+      setLocalClassItem(null);
+      setEditorContent("");
+    }
+  }, [isOpen, classItem]);
+
+  if (!classDetails || !localClassItem) return null;
 
   const sizeClasses = {
     container: "p-1",
@@ -64,7 +88,7 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
     }
   `;
 
-  const sanitized = sanitizeHtml(classItem?.text ?? "");
+  const sanitized = sanitizeHtml(localClassItem.text ?? "");
 
   const options = {
     replace: (domNode: DOMNode) => {
@@ -96,6 +120,52 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
 
   const processedText = parse(sanitized, options);
 
+  const handleSave = async () => {
+    if (!localClassItem) {
+      console.error("Cannot save: No class item available");
+      return;
+    }
+
+    const updatedClassItem: SlotClass = {
+      ...localClassItem,
+      text: editorContent,
+    };
+
+    try {
+      await onSave(updatedClassItem);
+      setLocalClassItem(updatedClassItem);
+      setIsEditMode(false);
+    } catch (error) {
+      console.error("Error saving class details:", error);
+      // Handle error (e.g., show an error message to the user)
+    }
+  };
+
+  const modules = {
+    toolbar: [
+      [{ header: "1" }, { header: "2" }, { font: [] }],
+      [{ size: [] }],
+      [{ color: [] }, { background: [] }],
+      [
+        "bold",
+        "italic",
+        "underline",
+        "strike",
+        "blockquote",
+        "link",
+        "code-block",
+      ],
+      [
+        { list: "ordered" },
+        { list: "bullet" },
+        { indent: "-1" },
+        { indent: "+1" },
+      ],
+      ["clean"],
+      [{ script: "sub" }, { script: "super" }],
+    ],
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="h-screen max-w-full p-0 text-2xl [&>button]:hidden">
@@ -118,13 +188,48 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                 <div className="text-2xl">{formattedDate}</div>
               </div>
             </h2>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-8 w-8" />
-            </Button>
+            <div className="flex items-center">
+              {!isEditMode && (
+                <Button
+                  variant="outline"
+                  className="text-foreground"
+                  onClick={() => setIsEditMode(true)}
+                >
+                  <Edit className="mr-2" size={20} /> Edit
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="h-8 w-8" />
+              </Button>
+            </div>
           </div>
           <ScrollArea className="flex-grow">
             <div className="p-6">
-              <div className="class-content">{processedText}</div>
+              {isEditMode ? (
+                <>
+                  <div className="h-[60vh]">
+                    <ReactQuill
+                      value={editorContent}
+                      onChange={setEditorContent}
+                      modules={modules}
+                      theme="snow"
+                      className="h-full"
+                      preserveWhitespace
+                    />
+                  </div>
+                  <div className="mt-16 flex justify-end space-x-2">
+                    <Button
+                      onClick={() => setIsEditMode(false)}
+                      variant="destructive"
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={handleSave}>Save</Button>
+                  </div>
+                </>
+              ) : (
+                <div className="class-content">{processedText}</div>
+              )}
             </div>
           </ScrollArea>
         </div>

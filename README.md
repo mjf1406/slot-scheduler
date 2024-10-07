@@ -24,6 +24,7 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 2024/10/07
 
+- added an edit button to the display modal, improving UX
 - adjusted the pixel size of each minute to 1.75, increasing the height of each time slot
 
 2024/10/04

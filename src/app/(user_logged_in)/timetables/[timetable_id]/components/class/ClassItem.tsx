@@ -159,9 +159,9 @@ const ClassItem: React.FC<ClassItemProps> = ({
             >
               <Edit size={16} className="mr-2" /> Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={handleDetailsClick}>
+            {/* <DropdownMenuItem onSelect={handleDetailsClick}>
               <FileText size={16} className="mr-2" /> Details
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuItem onSelect={handleDisplayClick}>
               <Monitor size={16} className="mr-2" /> Display
             </DropdownMenuItem>

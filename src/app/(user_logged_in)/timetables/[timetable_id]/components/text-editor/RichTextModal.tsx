@@ -103,7 +103,7 @@ const RichTextModal: React.FC<RichTextModalProps> = ({
             preserveWhitespace
           />
         </div>
-        <div className="mt-10 flex justify-end space-x-2">
+        <div className="mt-15 flex justify-end space-x-2">
           <Button onClick={handleClose} variant="destructive">
             Cancel
           </Button>
