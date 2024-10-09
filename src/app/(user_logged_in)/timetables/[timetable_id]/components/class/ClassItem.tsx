@@ -33,6 +33,7 @@ interface ClassItemProps {
   timetableId: string;
   size?: "small" | "normal";
   isDragging?: boolean;
+  isComplete?: boolean;
 }
 
 const ClassItem: React.FC<ClassItemProps> = ({
@@ -43,6 +44,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
   onDisplayClick,
   size = "normal",
   isDragging = false,
+  isComplete = false,
 }) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: classData.class_id,
@@ -135,6 +137,15 @@ const ClassItem: React.FC<ClassItemProps> = ({
               icon="circle-question"
               className={sizeClasses.icon}
             />
+          )}
+          {isComplete && (
+            <span
+              className={`${sizeClasses.text}`}
+              role="img"
+              aria-label="Completed"
+            >
+              ✅
+            </span>
           )}
           <span className={`truncate font-medium ${sizeClasses.text}`}>
             {classData.name}

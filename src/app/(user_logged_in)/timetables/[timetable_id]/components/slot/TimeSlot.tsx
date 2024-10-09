@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import type { Slot, Class } from "~/server/db/types";
+import type { Slot, Class, SlotClass } from "~/server/db/types";
 import { EditTimeSlotDialog } from "./components/EditTimeSlotDialog";
 import { ActionDropdown } from "./components/ActionDropdown";
 import { useDroppable } from "@dnd-kit/core";
@@ -9,6 +9,7 @@ import { cn } from "~/lib/utils";
 interface TimeSlotProps {
   slot: Slot;
   classes: Class[];
+  slotClasses: SlotClass[];
   onDeleteSlot: (id: string) => void;
   onEditSlot: (updatedSlot: Slot) => void;
   getSlotStyle: (slot: Slot) => React.CSSProperties;
@@ -24,6 +25,7 @@ interface TimeSlotProps {
 export const TimeSlot: React.FC<TimeSlotProps> = ({
   slot,
   classes,
+  slotClasses,
   onDeleteSlot,
   onEditSlot,
   getSlotStyle,
@@ -71,20 +73,29 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
       <div className="text-4xs font-semibold md:text-xs">
         {slot.start_time} - {slot.end_time}
       </div>
-      {classes.map((classItem) => (
-        <div key={classItem.class_id} className="flex h-full flex-col">
-          <ClassItem
-            key={classItem.class_id}
-            classData={classItem}
-            onEdit={onEditClass}
-            onDelete={onDeleteClass}
-            onClick={onClassClick}
-            onDisplayClick={onDisplayClick}
-            timetableId={slot.timetable_id}
-            size="small"
-          />
-        </div>
-      ))}
+      {classes.map((classItem) => {
+        const slotClass = slotClasses.find(
+          (sc) =>
+            sc.class_id === classItem.class_id && sc.slot_id === slot.slot_id,
+        );
+        const isComplete = slotClass?.complete ?? false;
+
+        return (
+          <div key={classItem.class_id} className="flex h-full flex-col">
+            <ClassItem
+              key={classItem.class_id}
+              classData={classItem}
+              onEdit={onEditClass}
+              onDelete={onDeleteClass}
+              onClick={onClassClick}
+              onDisplayClick={onDisplayClick}
+              timetableId={slot.timetable_id}
+              size="small"
+              isComplete={isComplete}
+            />
+          </div>
+        );
+      })}
       <div className="flex items-end justify-between">
         <span className="text-4xs md:text-xs">
           {calculateDuration(slot.start_time, slot.end_time)}

@@ -14,13 +14,23 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 - slots: added an edit button to created slots that prompts you to change all future slots, or just this one
 - UX: when adding a class, class applies to current timetable or selected timetables
+- ⚠️ local-first: use [TinyBase](https://tinybase.org/) to implement a local-first architecture
+- ⚠️ i18n: use [next-international](https://next-international.vercel.app/docs/app-setup) for localization
 
 ### p0
 
 - BUG: can now edit the details of a class when it is unassigned
 - BUG: when moving a class from a slot to unassigned and back into a slot, the slot no longer loses its dnd functionality
+- How do we handle the same class being repeated when the class will be in different blocks?
+  - when editing a class, allow a linked class to be selected, where they both share TEXT column data
+    - call this Linked Class and it shares only the TEXT column
 
 ## Change Log
+
+2024/10/09
+
+- tags must also include hyphens and underscores and other characters, only a space should break them
+- Add a checkbox to the details that the user can click to indicate it's done, then display it in the class item
 
 2024/10/07
 

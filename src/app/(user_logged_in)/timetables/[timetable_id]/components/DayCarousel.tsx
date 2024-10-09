@@ -254,6 +254,9 @@ export default function DayCarousel({
                     key={slot.slot_id}
                     slot={slot}
                     classes={getClassesForSlot(slot)}
+                    slotClasses={slotClasses.filter(
+                      (sc) => sc.slot_id === slot.slot_id,
+                    )}
                     onDeleteSlot={onDeleteSlot}
                     getSlotStyle={getSlotStyle}
                     onEditSlot={(updatedSlot) => onEditSlot(updatedSlot, false)}

@@ -41,6 +41,7 @@ export type Class = {
     color: string;
     icon_name: string;
     icon_prefix: 'fas' | 'far';
+    linked_class: string | null;
 };
 
 export type SlotClass = {
@@ -53,4 +54,5 @@ export type SlotClass = {
     year: number;
     size: "whole" | "split";
     text?: string | null;
+    complete: boolean | null;
 };

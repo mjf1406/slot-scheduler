@@ -18,6 +18,7 @@ import parse, { type DOMNode, Text } from "html-react-parser";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
+import { Checkbox } from "~/components/ui/checkbox";
 
 interface DisplayClassDetailsProps {
   classItem: SlotClass | null;
@@ -46,14 +47,17 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [editorContent, setEditorContent] = useState("");
   const [localClassItem, setLocalClassItem] = useState<SlotClass | null>(null);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     if (isOpen && classItem) {
       setLocalClassItem(classItem);
       setEditorContent(classItem.text ?? "");
+      setIsCompleted(classItem.complete ?? false);
     } else {
       setLocalClassItem(null);
       setEditorContent("");
+      setIsCompleted(false);
     }
   }, [isOpen, classItem]);
 
@@ -94,7 +98,7 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
     replace: (domNode: DOMNode) => {
       if (domNode instanceof Text) {
         const textContent = domNode.data;
-        const hashtagRegex = /#(\w+)/g;
+        const hashtagRegex = /#[^\s]+/g; // Updated regex to match hashtags until a space
 
         const parts: React.ReactNode[] = [];
         let lastIndex = 0;
@@ -104,7 +108,9 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
           if (match.index > lastIndex) {
             parts.push(textContent.substring(lastIndex, match.index));
           }
-          parts.push(<HashtagBadge key={match.index} tag={match[1] ?? ""} />);
+          parts.push(
+            <HashtagBadge key={match.index} tag={match[0].slice(1)} />,
+          );
           lastIndex = match.index + match[0].length;
         }
 
@@ -129,6 +135,7 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
     const updatedClassItem: SlotClass = {
       ...localClassItem,
       text: editorContent,
+      complete: isCompleted,
     };
 
     try {
@@ -189,6 +196,7 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
               </div>
             </h2>
             <div className="flex items-center">
+              {isCompleted && <div className="mr-2">✅ All done!</div>}
               {!isEditMode && (
                 <Button
                   variant="outline"
@@ -218,6 +226,21 @@ const DisplayClassDetails: React.FC<DisplayClassDetailsProps> = ({
                     />
                   </div>
                   <div className="mt-16 flex justify-end space-x-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="complete"
+                        checked={isCompleted}
+                        onCheckedChange={(checked) =>
+                          setIsCompleted(checked as boolean)
+                        }
+                      />
+                      <label
+                        htmlFor="complete"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Complete
+                      </label>
+                    </div>
                     <Button
                       onClick={() => setIsEditMode(false)}
                       variant="destructive"

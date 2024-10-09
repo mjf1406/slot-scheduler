@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { foreignKey, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import type { Slot } from "./types";
 
@@ -21,9 +21,10 @@ export const users = sqliteTable('users',
   
 export const classes = sqliteTable('classes', 
   {
+    class_id: text('class_id').notNull().primaryKey(),
     user_id: text('user_id').notNull().references(() => users.user_id),
     timetable_id: text('timetable_id').notNull().references(() => timetables.timetable_id),
-    class_id: text('class_id').notNull().primaryKey(),
+    linked_class: text('linked_class'), // references class_id
     name: text('name').notNull(),
     default_day: text('default_day'),
     default_start: text('default_start'),
@@ -37,7 +38,12 @@ export const classes = sqliteTable('classes',
   }, 
   (table) => {
       return {
-          classes_by_user_id: index("classes_by_user_id").on(table.user_id)
+          classes_by_user_id: index("classes_by_user_id").on(table.user_id),
+          parentReference: foreignKey({
+            columns: [table.linked_class],
+            foreignColumns: [table.class_id],
+            name: "class_linked_class_id",
+        })
       }
   }
 );
@@ -86,6 +92,7 @@ export const slot_classes = sqliteTable('slot_classes',
     year: integer('year').notNull(),
     size: text('size').$type<"whole" | "split">().notNull(),
     text: text('text'),
+    complete: integer('complete', { mode: 'boolean' }),
   },
   (table) => ({
     slot_classes_timetable_idx: index("slot_classes_timetable_idx").on(table.timetable_id),

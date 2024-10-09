@@ -64,6 +64,7 @@ export async function GET() {
             color: cls.color ?? '#FFFFFF',
             icon_name: cls.icon_name ?? '',
             icon_prefix: cls.icon_prefix as "fas" | "far" ?? 'fas',
+            linked_class: cls.linked_class,
         }));
 
         // Combine timetables and classes

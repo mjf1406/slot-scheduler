@@ -362,6 +362,7 @@ export async function updateSlotClass(slotClass: SlotClass) {
       .set({
         text: slotClass.text,
         size: slotClass.size,
+        complete: slotClass.complete,
         // Only update the fields that are allowed to be updated
         // We don't update IDs, week_number, or year as those are structural
       })
@@ -380,8 +381,6 @@ export async function updateSlotClass(slotClass: SlotClass) {
         message: "Slot class not found or you don't have permission to update it"
       };
     }
-
-    console.log("Successfully updated slot class:", updatedSlotClasses[0]);
 
     return {
       success: true,
@@ -406,6 +405,7 @@ export async function addExampleClasses(timetableId: string): Promise<Class[]> {
     user_id: userId,
     timetable_id: timetableId,
     class_id: generateUuidWithPrefix("class_"),
+    linked_class: null,
   }));
 
   await db.insert(classes).values(newClasses);

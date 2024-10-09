@@ -4,6 +4,7 @@ import { Button } from "~/components/ui/button";
 import ClassItem from "./ClassItem";
 import type { Class, SlotClass } from "~/server/db/types";
 import { addExampleClasses } from "../../actions";
+import { getYearAndWeekNumber } from "../../utils";
 
 interface ClassListProps {
   classes: Class[];
@@ -12,6 +13,8 @@ interface ClassListProps {
   onClassClick: (classData: SlotClass | Class) => void;
   timetableId: string;
   onDisplayClick: (classData: Class | SlotClass) => void;
+  slotClasses: SlotClass[];
+  currentWeekStart: Date;
 }
 
 const ClassList: React.FC<ClassListProps> = ({
@@ -21,6 +24,8 @@ const ClassList: React.FC<ClassListProps> = ({
   onClassClick,
   onDisplayClick,
   timetableId,
+  slotClasses,
+  currentWeekStart,
 }) => {
   const [classItems, setClassItems] = useState<Class[]>(classes);
   const [isAdding, setIsAdding] = useState(false);
@@ -48,6 +53,8 @@ const ClassList: React.FC<ClassListProps> = ({
     }
   };
 
+  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
+
   return (
     <div
       ref={setNodeRef}
@@ -65,20 +72,30 @@ const ClassList: React.FC<ClassListProps> = ({
           </div>
         ) : (
           <div className="m-auto flex w-full flex-col gap-1">
-            {classItems.map(
-              (cls) =>
-                cls && (
-                  <ClassItem
-                    key={cls.class_id}
-                    classData={cls}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onClick={onClassClick}
-                    onDisplayClick={onDisplayClick}
-                    timetableId={timetableId}
-                  />
-                ),
-            )}
+            {classItems.map((cls) => {
+              if (!cls) return null;
+              const slotClass = slotClasses.find(
+                (sc) =>
+                  sc.class_id === cls.class_id &&
+                  sc.year === year &&
+                  sc.week_number === weekNumber,
+              );
+              const isComplete = slotClass?.complete ?? false;
+              console.log("🚀 ~ {classItems.map ~ isComplete:", isComplete);
+
+              return (
+                <ClassItem
+                  key={cls.class_id}
+                  classData={cls}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onClick={onClassClick}
+                  onDisplayClick={onDisplayClick}
+                  timetableId={timetableId}
+                  isComplete={isComplete}
+                />
+              );
+            })}
           </div>
         )}
       </div>

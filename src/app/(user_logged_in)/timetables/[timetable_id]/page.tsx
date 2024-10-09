@@ -45,7 +45,6 @@ import {
   getUnassignedClassesForWeek,
   getYearAndWeekNumber,
 } from "./utils";
-import RichTextModal from "./components/text-editor/RichTextModal";
 import DisplayClassDetails from "./components/DisplayClassDetails";
 import { useToast } from "~/components/ui/use-toast";
 
@@ -250,6 +249,7 @@ export default function TimetablePage() {
                     week_number: weekNumber, // ensure week_number is a non-optional number
                     size: "whole", // or some other default value for size
                     text: "", // or some other default value for text
+                    complete: false,
                   };
 
                   return {
@@ -268,6 +268,7 @@ export default function TimetablePage() {
                     week_number: weekNumber,
                     size: "whole",
                     text: "", // Initialize text as empty or null
+                    complete: false,
                   };
 
                   return {
@@ -419,23 +420,6 @@ export default function TimetablePage() {
     if (!over || !selectedTimetable) return;
     // Handle drag over if needed
   };
-
-  // const handleDeleteSlot = async (slot_id: string) => {
-  //   try {
-  //     const response = await deleteSlot(slot_id);
-
-  //     if (response.success) {
-  //       // Invalidate the query to refetch the updated data
-  //       await queryClient.invalidateQueries({
-  //         queryKey: [timetablesOptions.queryKey],
-  //       });
-  //     } else {
-  //       console.error("Failed to delete slot:", response.message);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error deleting slot:", error);
-  //   }
-  // };
 
   const handleDeleteSlot = async (slot_id: string) => {
     // Keep a copy of the current timeSlots
@@ -675,34 +659,6 @@ export default function TimetablePage() {
     );
   }
 
-  // const handleClassClick = (classData: SlotClass | Class) => {
-  //   if ("slot_id" in classData) {
-  //     // It's a SlotClass
-  //     setSelectedClass(classData);
-  //     const classDetails =
-  //       selectedTimetable?.classes.find(
-  //         (c) => c.class_id === classData.class_id,
-  //       ) ?? null;
-  //     setSelectedClassDetails(classDetails);
-  //   } else {
-  //     // It's a Class
-  //     // Find if this class has any existing SlotClass for the current week
-  //     const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
-  //     const existingSlotClass =
-  //       selectedTimetable?.slotClasses?.find(
-  //         (sc) =>
-  //           sc.class_id === classData.class_id &&
-  //           sc.year === year &&
-  //           sc.week_number === weekNumber,
-  //       ) ?? null;
-
-  //     setSelectedClass(existingSlotClass);
-  //     setSelectedClassDetails(classData);
-  //   }
-  //   setIsModalOpen(true);
-  // };
-
-  // TimetablePage.tsx
   const handleClassClick = (classData: SlotClass | Class) => {
     if ("slot_id" in classData) {
       // It's a SlotClass
@@ -734,6 +690,7 @@ export default function TimetablePage() {
           week_number: weekNumber,
           size: "whole",
           text: "", // Initialize text as empty
+          complete: false,
         };
 
         setSelectedClass(newSlotClass);
@@ -776,13 +733,6 @@ export default function TimetablePage() {
   return (
     <ContentLayout title="Timetables">
       <Suspense fallback={<LoadingPage />}>
-        {/* <RichTextModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          classItem={selectedClass}
-          classDetails={selectedClassDetails}
-          onSave={handleSaveClassDetails}
-        /> */}
         <DisplayClassDetails
           classItem={selectedClass}
           classDetails={selectedClassDetails}
@@ -822,6 +772,8 @@ export default function TimetablePage() {
                   timetableId={selectedTimetable.timetable_id}
                   onClassClick={handleClassClick}
                   onDisplayClick={handleDisplayClick}
+                  slotClasses={selectedTimetable?.slotClasses ?? []}
+                  currentWeekStart={currentWeekStart}
                 />
               </div>
               <div className="col-span-3">

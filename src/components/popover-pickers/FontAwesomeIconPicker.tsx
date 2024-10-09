@@ -215,9 +215,6 @@ const FAIconPicker: React.FC<FAIconPickerProps> = ({
           </div>
         </PopoverContentInline>
       </Popover>
-      {/* <p className="mt-2 text-xs text-gray-500">
-        Total icons: {iconLookups.length}, Filtered: {filteredIcons.length}
-      </p> */}
     </div>
   );
 };
