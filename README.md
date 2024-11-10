@@ -26,7 +26,7 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
   - when editing a class, allow a linked class to be selected, where they both share TEXT column data
     - call this Linked Class and it shares only the TEXT column
 - added: can now create a new class for the current week only
-- UX: user can now mark an entire day as no school day for the given week only
+- UX: user can now mark an entire day as no school day for the given week only (this will just loop through all the slots on the given day, using the below)
 - UX: user can now disable a slot using the action menu for the given week only
 - UX: can remove a class from only the current week by hiding and then revealing hidden classes so they can be unhidden
 

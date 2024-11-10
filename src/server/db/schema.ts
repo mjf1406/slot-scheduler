@@ -93,6 +93,7 @@ export const slot_classes = sqliteTable('slot_classes',
     size: text('size').$type<"whole" | "split">().notNull(),
     text: text('text'),
     complete: integer('complete', { mode: 'boolean' }),
+    hidden: integer('hidden', { mode: 'boolean' }),
   },
   (table) => ({
     slot_classes_timetable_idx: index("slot_classes_timetable_idx").on(table.timetable_id),

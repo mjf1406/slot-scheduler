@@ -250,6 +250,7 @@ export default function TimetablePage() {
                     size: "whole", // or some other default value for size
                     text: "", // or some other default value for text
                     complete: false,
+                    hidden: false,
                   };
 
                   return {
@@ -269,6 +270,7 @@ export default function TimetablePage() {
                     size: "whole",
                     text: "", // Initialize text as empty or null
                     complete: false,
+                    hidden: false,
                   };
 
                   return {
@@ -732,6 +734,7 @@ export default function TimetablePage() {
           size: "whole",
           text: "", // Initialize text as empty
           complete: false,
+          hidden: false,
         };
 
         setSelectedClass(newSlotClass);

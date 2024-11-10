@@ -56,4 +56,5 @@ export type SlotClass = {
     size: "whole" | "split";
     text?: string | null;
     complete: boolean | null;
+    hidden: boolean | undefined | null;
 };
