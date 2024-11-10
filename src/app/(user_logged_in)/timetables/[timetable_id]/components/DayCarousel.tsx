@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { calculateDuration } from "~/lib/utils";
@@ -116,6 +116,14 @@ export default function DayCarousel({
 
   const visibleDays = days.slice(currentDayIndex, currentDayIndex + 2);
   const visibleDates = weekDays.slice(currentDayIndex, currentDayIndex + 2);
+
+  const handleToggleDisable = useCallback(
+    (slot: Slot) => {
+      const updatedSlot = { ...slot, disabled: !slot.disabled };
+      onEditSlot(updatedSlot, false);
+    },
+    [onEditSlot],
+  );
 
   const getClassesForSlot = (slot: Slot) => {
     return classes.filter((cls) => {
@@ -267,6 +275,8 @@ export default function DayCarousel({
                     onClassClick={onClassClick}
                     onDisplayClick={onDisplayClick}
                     isPastTimeSlot={isPastTimeSlot}
+                    isDisabled={slot.disabled} // Pass isDisabled
+                    onToggleDisable={() => handleToggleDisable(slot)} // Pass onToggleDisable
                   />
                 ))}
             </div>
