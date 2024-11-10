@@ -6,6 +6,7 @@ import { ActionDropdown } from "./components/ActionDropdown";
 import { useDroppable } from "@dnd-kit/core";
 import ClassItem from "../class/ClassItem";
 import { cn } from "~/lib/utils";
+import { CircleMinus } from "lucide-react";
 
 interface TimeSlotProps {
   slot: Slot;
@@ -84,6 +85,11 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
         <div className="text-4xs font-semibold md:text-xs">
           {slot.start_time} - {slot.end_time}
         </div>
+        {isDisabled && (
+          <div className="flex h-full w-full items-center justify-center opacity-60">
+            <CircleMinus size={54} />
+          </div>
+        )}
         {classes.map((classItem) => {
           const slotClass = slotClasses.find(
             (sc) =>

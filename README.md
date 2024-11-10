@@ -34,6 +34,7 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 2024/11/10
 
+- UX: can disable a time slot, but it does not persist in the DB
 - UI: there is a border around the slots to more easily tell them apart
 - fixed: classes can now be deleted properly
 

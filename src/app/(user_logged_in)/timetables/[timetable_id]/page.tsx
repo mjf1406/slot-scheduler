@@ -564,20 +564,61 @@ export default function TimetablePage() {
     }
   };
 
+  // const handleEditSlot = async (updatedSlot: Slot) => {
+  //   try {
+  //     const response = await updateSlot(updatedSlot);
+
+  //     if (response.success && response.slot) {
+  //       // Invalidate the query to refetch the updated data
+  //       await queryClient.invalidateQueries({
+  //         queryKey: [timetablesOptions.queryKey],
+  //       });
+  //     } else {
+  //       console.error("Failed to edit slot:", response.message);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error editing slot:", error);
+  //   }
+  // };
+
   const handleEditSlot = async (updatedSlot: Slot) => {
+    // Keep a snapshot of the previous state
+    const previousTimeSlots = queryClient.getQueryData<Timetable[]>(
+      timetablesOptions.queryKey,
+    );
+
+    // Optimistically update the cache
+    queryClient.setQueryData<Timetable[]>(
+      timetablesOptions.queryKey,
+      (oldData) =>
+        oldData?.map((timetable) => {
+          if (timetable.timetable_id === timetableId) {
+            return {
+              ...timetable,
+              slots: timetable.slots.map((slot) =>
+                slot.slot_id === updatedSlot.slot_id ? updatedSlot : slot,
+              ),
+            };
+          }
+          return timetable;
+        }),
+    );
+
     try {
       const response = await updateSlot(updatedSlot);
 
       if (response.success && response.slot) {
-        // Invalidate the query to refetch the updated data
-        await queryClient.invalidateQueries({
-          queryKey: [timetablesOptions.queryKey],
-        });
+        // Optionally, update the cache with the response from the server
+        // But since we've already optimistically updated it, this might not be necessary
       } else {
         console.error("Failed to edit slot:", response.message);
+        // Revert to the previous state
+        queryClient.setQueryData(timetablesOptions.queryKey, previousTimeSlots);
       }
     } catch (error) {
       console.error("Error editing slot:", error);
+      // Revert to the previous state
+      queryClient.setQueryData(timetablesOptions.queryKey, previousTimeSlots);
     }
   };
 
