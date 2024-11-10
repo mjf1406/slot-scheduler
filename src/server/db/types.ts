@@ -13,6 +13,7 @@ export type Slot = {
     day: string;
     start_time: string;
     end_time: string;
+    disabled?: boolean | undefined;
 };
 
 export type Timetable = {

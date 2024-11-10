@@ -16,6 +16,7 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 - UX: when adding a class, class applies to current timetable or selected timetables
 - ⚠️ local-first: use [TinyBase](https://tinybase.org/) to implement a local-first architecture
 - ⚠️ i18n: use [next-international](https://next-international.vercel.app/docs/app-setup) for localization
+- automation: announcements can now be automated. User can add an announcement that is on a given date, then set the range for which to display them, e.g. only display announcements from current day to 3 weeks out.
 
 ### p0
 
@@ -24,8 +25,17 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 - How do we handle the same class being repeated when the class will be in different blocks?
   - when editing a class, allow a linked class to be selected, where they both share TEXT column data
     - call this Linked Class and it shares only the TEXT column
+- added: can now create a new class for the current week only
+- UX: user can now mark an entire day as no school day
+- UX: user can now disable a slot using the action menu
+- UX: can remove a class from only the current week by hiding and then revealing hidden classes so they can be unhidden
 
 ## Change Log
+
+2024/11/10
+
+- UI: there is a border around the slots to more easily tell them apart
+- fixed: classes can now be deleted properly
 
 2024/10/09
 

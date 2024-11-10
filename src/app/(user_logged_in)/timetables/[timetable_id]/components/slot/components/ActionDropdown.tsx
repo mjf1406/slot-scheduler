@@ -1,5 +1,6 @@
+// ActionDropdown.tsx
 import React, { useState } from "react";
-import { MoreVertical, Edit, Trash2 } from "lucide-react";
+import { MoreVertical, Edit, Trash2, CircleMinus } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +22,8 @@ import {
 interface ActionDropdownProps {
   onEdit: () => void;
   onDelete: () => void;
+  onToggleDisable: () => void; // New prop
+  isDisabled: boolean | undefined; // New prop
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -28,6 +31,8 @@ interface ActionDropdownProps {
 export const ActionDropdown: React.FC<ActionDropdownProps> = ({
   onEdit,
   onDelete,
+  onToggleDisable,
+  isDisabled,
   isOpen,
   onOpenChange,
 }) => {
@@ -35,6 +40,11 @@ export const ActionDropdown: React.FC<ActionDropdownProps> = ({
 
   const handleEdit = () => {
     onEdit();
+    onOpenChange(false);
+  };
+
+  const handleDisable = () => {
+    onToggleDisable();
     onOpenChange(false);
   };
 
@@ -58,6 +68,12 @@ export const ActionDropdown: React.FC<ActionDropdownProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={handleDisable}>
+            <CircleMinus
+              className={`mr-2 h-4 w-4 ${isDisabled ? "opacity-50" : "opacity-100"}`}
+            />
+            {isDisabled ? "Enable" : "Disable"}
+          </DropdownMenuItem>
           <DropdownMenuItem onSelect={handleEdit}>
             <Edit className="mr-2 h-4 w-4" />
             Edit

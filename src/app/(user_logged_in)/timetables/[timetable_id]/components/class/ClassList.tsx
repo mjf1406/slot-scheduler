@@ -81,7 +81,6 @@ const ClassList: React.FC<ClassListProps> = ({
                   sc.week_number === weekNumber,
               );
               const isComplete = slotClass?.complete ?? false;
-              console.log("🚀 ~ {classItems.map ~ isComplete:", isComplete);
 
               return (
                 <ClassItem

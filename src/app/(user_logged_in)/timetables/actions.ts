@@ -2,7 +2,7 @@
 
 import { generateUuidWithPrefix } from "~/lib/utils";
 import { db } from "~/server/db";
-import { timetables, classes, slots } from "~/server/db/schema";
+import { timetables, classes, slots, slot_classes } from "~/server/db/schema";
 import { auth } from '@clerk/nextjs/server'
 import type { FormSchema } from './form-schemas';
 import { eq, and } from "drizzle-orm";
@@ -209,12 +209,15 @@ export async function editClass(data: {
 }
   
 export async function deleteClass(class_id: string) {
-const { userId } = auth();
-if (!userId) throw new Error("User not authenticated");
+  const { userId } = auth();
+  if (!userId) throw new Error("User not authenticated");
 
-await db.delete(classes)
+  await db.delete(slot_classes)
+    .where(eq(slot_classes.class_id, class_id));
+
+  await db.delete(classes)
     .where(eq(classes.class_id, class_id));
 
-revalidatePath('/timetables');
-return { success: true, message: "Class deleted successfully" };
+  revalidatePath('/timetables');
+  return { success: true, message: "Class deleted successfully" };
 }

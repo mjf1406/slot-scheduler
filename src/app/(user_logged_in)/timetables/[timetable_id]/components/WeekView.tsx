@@ -1,6 +1,7 @@
+// WeekView.tsx
 "use client";
 
-import React from "react";
+import React, { useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { calculateDuration, cn } from "~/lib/utils";
@@ -165,6 +166,15 @@ export default function WeekView({
     return false;
   };
 
+  // Define handleToggleDisable
+  const handleToggleDisable = useCallback(
+    (slot: Slot) => {
+      const updatedSlot = { ...slot, disabled: !slot.disabled };
+      onEditSlot(updatedSlot, false);
+    },
+    [onEditSlot],
+  );
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-4 flex items-center justify-between">
@@ -265,6 +275,8 @@ export default function WeekView({
                     onClassClick={onClassClick}
                     onDisplayClick={onDisplayClick}
                     isPastTimeSlot={isPastTimeSlot}
+                    isDisabled={slot.disabled} // Pass isDisabled
+                    onToggleDisable={() => handleToggleDisable(slot)} // Pass onToggleDisable
                   />
                 ))}
             </div>
