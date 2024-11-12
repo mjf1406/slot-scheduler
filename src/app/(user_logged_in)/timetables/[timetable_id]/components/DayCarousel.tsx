@@ -120,7 +120,7 @@ export default function DayCarousel({
 
   const handleToggleDisable = useCallback(
     (slot: Slot) => {
-      const updatedSlot = { ...slot, disabled: !slot.disabled };
+      const updatedSlot = { ...slot, disabled: !slot.isDisabled };
       onEditSlot(updatedSlot, false);
     },
     [onEditSlot],
@@ -217,7 +217,8 @@ export default function DayCarousel({
           {hours.map((hour) => (
             <div
               key={hour}
-              className={`mb-10 h-[${HOUR_SIZE_PIXELS}px] text-right text-sm text-muted-foreground`}
+              style={{ height: `${HOUR_SIZE_PIXELS}px` }}
+              className="text-right text-sm text-muted-foreground"
             >
               {hour === 0
                 ? "12 AM"
@@ -276,7 +277,7 @@ export default function DayCarousel({
                     onClassClick={onClassClick}
                     onDisplayClick={onDisplayClick}
                     isPastTimeSlot={isPastTimeSlot}
-                    isDisabled={slot.disabled} // Pass isDisabled
+                    isDisabled={slot.isDisabled} // Pass isDisabled
                     onToggleDisable={() => handleToggleDisable(slot)} // Pass onToggleDisable
                     year={year}
                     weekNumber={weekNumber}

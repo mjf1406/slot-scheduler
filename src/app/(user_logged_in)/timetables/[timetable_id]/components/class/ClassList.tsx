@@ -65,20 +65,19 @@ const ClassList: React.FC<ClassListProps> = ({
     >
       <div className="flex w-full flex-col items-center justify-center gap-2">
         <h3 className="text-center text-lg font-medium">Unassigned Classes</h3>
-        {/* Show the toggle button only if there are hidden classes */}
-        {slotClasses.some(
-          (sc) =>
-            sc.hidden && sc.year === year && sc.week_number === weekNumber,
-        ) && (
-          <div>
+        <div>
+          {slotClasses.some(
+            (sc) =>
+              sc.hidden && sc.year === year && sc.week_number === weekNumber,
+          ) && (
             <Button
               variant={"outline"}
               onClick={() => setShowHidden((prev) => !prev)}
             >
               {showHidden ? "Hide hidden classes" : "Show hidden classes"}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
         {classItems.length === 0 ? (
           <div className="flex justify-center">
             <Button onClick={handleAddExampleClasses} disabled={isAdding}>
@@ -86,7 +85,8 @@ const ClassList: React.FC<ClassListProps> = ({
             </Button>
           </div>
         ) : (
-          <div className="m-auto flex w-full flex-col gap-1">
+          // <div className="m-auto flex w-full flex-col gap-1">
+          <div className="grid w-full grid-cols-2 flex-col gap-1 md:grid-cols-3 lg:grid-cols-4 xl:flex">
             {classItems.map((cls) => {
               if (!cls) return null;
               const slotClass = slotClasses.find(

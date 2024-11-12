@@ -2,7 +2,7 @@
 
 import { NextResponse } from 'next/server';
 import { db } from '~/server/db/index';
-import { timetables, classes, slots as slotsTable, slot_classes } from '~/server/db/schema';
+import { timetables, classes, slots as slotsTable, slot_classes, disabled_slots } from '~/server/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Timetable, Class } from '~/server/db/types';
 import { auth } from '@clerk/nextjs/server';
@@ -26,15 +26,23 @@ export async function GET() {
             .from(classes)
             .where(eq(classes.user_id, userId));
 
+        // Fetch slots
         const slots = await db
             .select()
             .from(slotsTable)
-            .where(eq(slotsTable.user_id, userId))
+            .where(eq(slotsTable.user_id, userId));
 
+        // Fetch slotClasses
         const slotClasses = await db
             .select()
             .from(slot_classes)
-            .where(eq(slot_classes.user_id, userId))
+            .where(eq(slot_classes.user_id, userId));
+
+        // Fetch disabled slots
+        const disabledSlots = await db
+            .select()
+            .from(disabled_slots)
+            .where(eq(disabled_slots.user_id, userId));
 
         // Format timetables
         const formattedTimetables: Timetable[] = fetchedTimetables.map(timetable => ({
@@ -42,11 +50,16 @@ export async function GET() {
             timetable_id: timetable.timetable_id,
             days: timetable.days,
             name: timetable.name,
-            slots: slots.filter(i => i.timetable_id === timetable.timetable_id),
+            slots: slots
+                .filter(i => i.timetable_id === timetable.timetable_id)
+                .map(slot => ({
+                    ...slot,
+                    isDisabled: !!disabledSlots.find(disabledSlot => disabledSlot.slot_id === slot.slot_id)
+                })),
             start_time: timetable.start_time,
             end_time: timetable.end_time,
             classes: [],
-            slotClasses: slotClasses.filter(i => i.timetable_id === timetable.timetable_id)
+            slotClasses: slotClasses.filter(i => i.timetable_id === timetable.timetable_id),
         }));
 
         // Format classes

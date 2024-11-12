@@ -2,7 +2,7 @@
 
 import { generateUuidWithPrefix } from "~/lib/utils";
 import { db } from "~/server/db";
-import { slots as slotsTable, slot_classes as slotClassesTable, classes } from "~/server/db/schema";
+import { slots as slotsTable, slot_classes as slotClassesTable, classes, disabled_slots } from "~/server/db/schema";
 import type { Class, Slot, SlotClass } from "~/server/db/types";
 import { and, eq, gt, gte, lt, lte, ne, or } from "drizzle-orm"; // Adjust based on your Drizzle setup
 import { auth } from "@clerk/nextjs/server";
@@ -412,4 +412,109 @@ export async function addExampleClasses(timetableId: string): Promise<Class[]> {
   await db.insert(classes).values(newClasses);
 
   return newClasses;
+}
+
+// export async function toggleSlotDisabled(slotId: string) {
+//   const { userId } = auth();
+//   if (!userId) throw new Error("User not authenticated");
+
+//   try {
+//     // Check if the slot is currently disabled for the user
+//     const existingDisabledSlot = await db
+//       .select()
+//       .from(disabled_slots)
+//       .where(
+//         and(
+//           eq(disabled_slots.slot_id, slotId),
+//           eq(disabled_slots.user_id, userId)
+//         )
+//       );
+
+//     if (existingDisabledSlot.length > 0) {
+//       // Enable the slot by deleting the entry
+//       await db
+//         .delete(disabled_slots)
+//         .where(
+//           and(
+//             eq(disabled_slots.slot_id, slotId),
+//             eq(disabled_slots.user_id, userId)
+//           )
+//         );
+
+//       return { success: true, status: "enabled", message: "Slot enabled." };
+//     } else {
+//       // Disable the slot by inserting a new entry
+//       await db
+//         .insert(disabled_slots)
+//         .values({
+//           id: generateUuidWithPrefix("disabled_"),
+//           slot_id: slotId,
+//           user_id: userId,
+//         });
+
+//       return { success: true, status: "disabled", message: "Slot disabled." };
+//     }
+//   } catch (error) {
+//     console.error("Error toggling slot disabled status:", error);
+//     return {
+//       success: false,
+//       message: "Failed to toggle slot disabled status",
+//     };
+//   }
+// }
+
+export async function toggleSlotDisabled(slotId: string, disableDate: string) {
+  console.log(`Toggling disabled status for slot: ${slotId} on date: ${disableDate}`);
+
+  // Authenticate the user
+  const { userId } = auth();
+  if (!userId) throw new Error("User not authenticated");
+
+  try {
+    // Check if the slot is currently disabled on the specified date
+    const existingDisabledSlot = await db
+      .select()
+      .from(disabled_slots)
+      .where(
+        and(
+          eq(disabled_slots.slot_id, slotId),
+          eq(disabled_slots.disable_date, disableDate),
+          eq(disabled_slots.user_id, userId)
+        )
+      );
+
+    if (existingDisabledSlot.length > 0) {
+      // Slot is currently disabled, enable it by deleting the entry
+      await db
+        .delete(disabled_slots)
+        .where(
+          and(
+            eq(disabled_slots.slot_id, slotId),
+            eq(disabled_slots.disable_date, disableDate),
+            eq(disabled_slots.user_id, userId)
+          )
+        );
+
+      return { success: true, status: "enabled", message: "Slot enabled for the specified date." };
+    } else {
+      // Slot is not disabled, disable it by inserting a new entry
+      await db
+        .insert(disabled_slots)
+        .values({
+          id: generateUuidWithPrefix("disabled_"),
+          slot_id: slotId,
+          disable_date: disableDate,
+          user_id: userId,
+        });
+
+      return { success: true, status: "disabled", message: "Slot disabled for the specified date." };
+    }
+  } catch (error) {
+    console.error("Error toggling slot disabled status:", error);
+    return {
+      success: false,
+      message: "Failed to toggle slot disabled status",
+      // error: error.message,
+    };
+  }
 }

@@ -130,3 +130,92 @@ export function calculateDateFromDay(day: string, weekStart: Date): Date {
 
   return targetDate;
 }
+
+export type DayOfWeek = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+
+interface WeekDateResult {
+    success: boolean;
+    date?: string;
+    formattedDay?: DayOfWeek;
+    error?: string;
+}
+
+function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function getDateFromWeekNumber(
+  year: number, 
+  weekNumber: number, 
+  targetDay: DayOfWeek
+): WeekDateResult {
+  // Input validation
+  if (!Number.isInteger(year) || !Number.isInteger(weekNumber)) {
+      return {
+          success: false,
+          error: 'Year and week number must be integers'
+      };
+  }
+
+  if (weekNumber < 1 || weekNumber > 53) {
+      return {
+          success: false,
+          error: 'Week number must be between 1 and 53'
+      };
+  }
+
+  if (year < 1 || year > 9999) {
+      return {
+          success: false,
+          error: 'Year must be between 1 and 9999'
+      };
+  }
+
+  try {
+      // Array of day names
+      const days: DayOfWeek[] = [
+          'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+          'Friday', 'Saturday', 'Sunday'
+      ];
+
+      // Find January 1st of the given year
+      const januaryFirst = new Date(year, 0, 1);
+      
+      // Calculate the first week of the year
+      // According to ISO 8601, week 1 is the week with the first Thursday
+      const dayOffset = januaryFirst.getDay();
+      const firstMonday = new Date(year, 0, 1 + ((8 - dayOffset) % 7));
+      
+      // Calculate the Monday of the target week
+      const targetWeekMonday = new Date(firstMonday);
+      targetWeekMonday.setDate(firstMonday.getDate() + (weekNumber - 1) * 7);
+
+      // Calculate the target day within that week
+      const dayIndex = days.indexOf(targetDay);
+      if (dayIndex === -1) {
+          return {
+              success: false,
+              error: 'Invalid day provided'
+          };
+      }
+
+      // Add days to Monday to get to the target day
+      const targetDate = new Date(targetWeekMonday);
+      targetDate.setDate(targetWeekMonday.getDate() + dayIndex);
+
+      return {
+          success: true,
+          date: formatDate(targetDate),
+          formattedDay: targetDay
+      };
+
+  } catch (error) {
+      return {
+          success: false,
+          error: 'Error calculating date'
+      };
+  }
+}

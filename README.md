@@ -17,6 +17,7 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 - ⚠️ local-first: use [TinyBase](https://tinybase.org/) to implement a local-first architecture
 - ⚠️ i18n: use [next-international](https://next-international.vercel.app/docs/app-setup) for localization
 - automation: announcements can now be automated. User can add an announcement that is on a given date, then set the range for which to display them, e.g. only display announcements from current day to 3 weeks out.
+- UI: reduced zoom level when width is below 1280px so we can fit the whole layout in the small screen
 
 ### p0
 
@@ -27,13 +28,18 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
     - call this Linked Class and it shares only the TEXT column
 - added: can now create a new class for the current week only
 - UX: user can now mark an entire day as no school day for the given week only (this will just loop through all the slots on the given day, using the below)
-- UX: user can now disable a slot using the action menu for the given week only
+- UX: users can now disable slots using the slot action menu for the given week only
 
 ## Change Log
 
 2024/11/12
 
+- UI: users can disable a slot using the action button, but it disables it in all weeks
+- UI: class list is no longer super wide when on small screens
 - UX: finalized the hide/unhide classes in class list
+- UI: if a slot is disabled, an icon appears inside and it eh whole slot is set to opacity-50
+- UI: day view hours now render correctly
+- UI: class list now renders as a grid on smaller screens
 
 2024/11/11
 

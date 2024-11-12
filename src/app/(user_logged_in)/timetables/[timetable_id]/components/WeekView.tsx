@@ -172,10 +172,9 @@ export default function WeekView({
     return false;
   };
 
-  // Define handleToggleDisable
   const handleToggleDisable = useCallback(
     (slot: Slot) => {
-      const updatedSlot = { ...slot, disabled: !slot.disabled };
+      const updatedSlot = { ...slot, disabled: !slot.isDisabled };
       onEditSlot(updatedSlot, false);
     },
     [onEditSlot],
@@ -281,7 +280,7 @@ export default function WeekView({
                     onClassClick={onClassClick}
                     onDisplayClick={onDisplayClick}
                     isPastTimeSlot={isPastTimeSlot}
-                    isDisabled={slot.disabled} // Pass isDisabled
+                    isDisabled={slot.isDisabled} // Pass isDisabled
                     onToggleDisable={() => handleToggleDisable(slot)} // Pass onToggleDisable
                     year={year}
                     weekNumber={weekNumber}

@@ -795,7 +795,7 @@ export default function TimetablePage() {
           <div className="container px-0">
             <div id="timetable" className="mt-5">
               <div className="flex gap-5">
-                <h1 className="mb-2 text-3xl font-bold">
+                <h1 className="mb-2 text-lg font-bold lg:text-3xl">
                   {selectedTimetable.name}
                 </h1>
                 <CreateClassDialog
@@ -808,7 +808,7 @@ export default function TimetablePage() {
               </div>
             </div>
             <div className="flex grid-cols-4 flex-col gap-5 xl:grid">
-              <div className="col-span-1 w-full">
+              <div className="col-span-1 flex w-full items-center justify-center xl:block">
                 <ClassList
                   classes={unassignedClassesForCurrentWeek}
                   onEdit={handleEditClass}

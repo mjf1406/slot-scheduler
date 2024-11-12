@@ -104,3 +104,15 @@ export const slot_classes = sqliteTable('slot_classes',
     slot_classes_class_week_year_idx: index("slot_classes_class_week_year_idx").on(table.class_id, table.week_number, table.year),
   })
 )
+
+export const disabled_slots = sqliteTable('disabled_slots',
+  {
+    id: text('id').notNull().primaryKey(),
+    slot_id: text('slot_id').notNull().references(() => slots.slot_id),
+    disable_date: text('disable_date').default(sql`CURRENT_TIMESTAMP`).notNull(),
+    user_id: text('user_id').notNull().references(() => users.user_id),
+  },
+  (table) => ({
+    disabled_slots_slot_date_idx: index("disabled_slots_slot_date_idx").on(table.slot_id, table.disable_date),
+  })
+);

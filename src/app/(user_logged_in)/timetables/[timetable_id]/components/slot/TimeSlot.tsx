@@ -7,6 +7,8 @@ import { useDroppable } from "@dnd-kit/core";
 import ClassItem from "../class/ClassItem";
 import { cn } from "~/lib/utils";
 import { CircleMinus } from "lucide-react";
+import { toggleSlotDisabled } from "../../actions";
+import { DayOfWeek, getDateFromWeekNumber } from "../../utils";
 
 interface TimeSlotProps {
   slot: Slot;
@@ -49,9 +51,10 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [disabled, setDisabled] = useState(isDisabled);
   const { isOver, setNodeRef } = useDroppable({
     id: slot.slot_id,
-    disabled: isDisabled, // Use isDisabled prop to prevent dropping if disabled
+    disabled: disabled,
     data: {
       type: "TimeSlot",
       slot: slot,
@@ -68,10 +71,27 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
     setIsDropdownOpen(false);
   }, [onDeleteSlot, slot.slot_id]);
 
-  const handleToggleDisable = useCallback(() => {
-    onToggleDisable();
+  const handleToggleDisable = useCallback(async () => {
+    setDisabled(!disabled);
     setIsDropdownOpen(false);
-  }, [onToggleDisable]);
+    try {
+      const disabledDate = getDateFromWeekNumber(
+        year,
+        weekNumber,
+        slot.day as DayOfWeek,
+      );
+      if (disabledDate.success && disabledDate.date) {
+        const result = await toggleSlotDisabled(
+          slot.slot_id,
+          disabledDate.date,
+        );
+        console.log(result.message);
+      }
+    } catch (error) {
+      console.error("Error toggling slot disabled status:", error);
+      setDisabled(!disabled);
+    }
+  }, [disabled, year, weekNumber, slot.day, slot.slot_id]);
 
   const isPast = isPastTimeSlot(slot);
 
@@ -83,14 +103,14 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
         className={cn(
           "absolute left-1 right-1 flex flex-col justify-between overflow-hidden rounded border border-accent bg-accent/20 p-1",
           { "bg-accent/40": isOver },
-          isPast || isDisabled ? "opacity-50" : "",
+          isPast || disabled ? "opacity-50" : "",
         )}
         style={{ ...getSlotStyle(slot), zIndex: 1 }}
       >
         <div className="text-4xs font-semibold md:text-xs">
           {slot.start_time} - {slot.end_time}
         </div>
-        {isDisabled && (
+        {disabled && (
           <div className="flex h-full w-full items-center justify-center opacity-60">
             <CircleMinus size={54} />
           </div>
@@ -131,7 +151,7 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
             onToggleDisable={handleToggleDisable} // Pass onToggleDisable
-            isDisabled={isDisabled} // Pass isDisabled
+            isDisabled={disabled}
             isOpen={isDropdownOpen}
             onOpenChange={setIsDropdownOpen}
           />
