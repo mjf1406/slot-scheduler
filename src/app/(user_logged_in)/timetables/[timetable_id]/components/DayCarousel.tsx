@@ -7,6 +7,7 @@ import { calculateDuration } from "~/lib/utils";
 import type { Slot, Class, SlotClass } from "~/server/db/types";
 import { TimeSlot } from "./slot/TimeSlot";
 import { HOUR_SIZE_PIXELS } from "~/lib/constants";
+import { getYearAndWeekNumber } from "../utils";
 
 type CalendarCarouselProps = {
   start_time: number; // 0-23
@@ -50,7 +51,7 @@ export default function DayCarousel({
   onDisplayClick,
 }: CalendarCarouselProps) {
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
-
+  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
   const goToPreviousWeek = () => {
     const newWeekStart = new Date(currentWeekStart);
     newWeekStart.setDate(newWeekStart.getDate() - 7);
@@ -277,6 +278,8 @@ export default function DayCarousel({
                     isPastTimeSlot={isPastTimeSlot}
                     isDisabled={slot.disabled} // Pass isDisabled
                     onToggleDisable={() => handleToggleDisable(slot)} // Pass onToggleDisable
+                    year={year}
+                    weekNumber={weekNumber}
                   />
                 ))}
             </div>

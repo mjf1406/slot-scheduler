@@ -8,6 +8,20 @@
       "when": 1728455921893,
       "tag": "0000_ambiguous_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1731319068999,
+      "tag": "0001_add-hidden-to-slot_classes",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1731319525523,
+      "tag": "0002_add-hidden-to-slot_classes",
+      "breakpoints": true
     }
   ]
 }

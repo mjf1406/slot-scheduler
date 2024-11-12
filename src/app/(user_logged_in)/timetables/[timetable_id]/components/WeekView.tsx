@@ -9,6 +9,7 @@ import type { Slot, Class, SlotClass } from "~/server/db/types";
 import { TimeSlot } from "./slot/TimeSlot";
 import { HOUR_SIZE_PIXELS, MINUTE_SIZE_PIXELS } from "~/lib/constants";
 import ClassItem from "./class/ClassItem";
+import { getYearAndWeekNumber } from "../utils";
 
 interface ExtendedClass extends Class {
   slot_id?: string;
@@ -49,6 +50,7 @@ export default function WeekView({
   onClassClick,
   onDisplayClick,
 }: CalendarProps) {
+  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
   const renderClassInSlot = (slot: Slot, classItem: Class) => {
     return (
       <div
@@ -67,6 +69,10 @@ export default function WeekView({
             timetableId={slot.timetable_id}
             onClick={onClassClick}
             onDisplayClick={onDisplayClick}
+            isHidden={false}
+            slotId={slot.slot_id} // Added
+            year={year} // Added
+            weekNumber={weekNumber} // Added
           />
         </div>
       </div>
@@ -277,6 +283,8 @@ export default function WeekView({
                     isPastTimeSlot={isPastTimeSlot}
                     isDisabled={slot.disabled} // Pass isDisabled
                     onToggleDisable={() => handleToggleDisable(slot)} // Pass onToggleDisable
+                    year={year}
+                    weekNumber={weekNumber}
                   />
                 ))}
             </div>

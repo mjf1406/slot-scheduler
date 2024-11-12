@@ -3,7 +3,8 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
   Edit,
-  FileText,
+  Eye,
+  EyeOff,
   Grip,
   Monitor,
   MoreVertical,
@@ -18,11 +19,13 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { EditClassDialog } from "./EditClassDialog";
 import DeleteConfirmationDialog from "./DeleteClassAlert";
-import type { Class } from "~/server/db/types";
+import type { Class, SlotClass } from "~/server/db/types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import type { IconName } from "@fortawesome/fontawesome-svg-core";
 import { getContrastColor } from "~/lib/utils";
 import { useTheme } from "next-themes";
+import { moveSlotClass } from "../../actions";
+import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface ClassItemProps {
   classData: Class;
@@ -34,6 +37,11 @@ interface ClassItemProps {
   size?: "small" | "normal";
   isDragging?: boolean;
   isComplete?: boolean;
+  isHidden?: boolean;
+  slotId?: string | null;
+  slotClassData?: SlotClass | undefined;
+  year: number;
+  weekNumber: number;
 }
 
 const ClassItem: React.FC<ClassItemProps> = ({
@@ -42,12 +50,19 @@ const ClassItem: React.FC<ClassItemProps> = ({
   onDelete,
   onClick,
   onDisplayClick,
+  timetableId,
   size = "normal",
   isDragging = false,
   isComplete = false,
+  isHidden = false,
+  slotId,
+  slotClassData,
+  year,
+  weekNumber,
 }) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: classData.class_id,
+    disabled: isHidden,
     data: {
       type: "ClassItem",
       class: classData,
@@ -96,6 +111,94 @@ const ClassItem: React.FC<ClassItemProps> = ({
     setIsDropdownOpen(false);
   };
 
+  // Get the queryClient instance
+  const queryClient = useQueryClient();
+
+  // Set up the mutation with optimistic updates
+  const hideClassMutation = useMutation({
+    mutationFn: (variables: {
+      class_id: string;
+      timetable_id: string;
+      year: number;
+      weekNumber: number;
+      newHiddenState: boolean;
+    }) => {
+      return moveSlotClass(
+        variables.class_id,
+        null,
+        variables.timetable_id,
+        variables.year,
+        variables.weekNumber,
+        variables.newHiddenState,
+      );
+    },
+    // Optimistic update
+    onMutate: async (variables) => {
+      if (!slotId) {
+        // Optionally, throw an error or handle the null case
+        return;
+      }
+      // Cancel any outgoing refetches
+      // await queryClient.cancelQueries(["slotClasses", slotId]);
+      await queryClient.cancelQueries({ queryKey: ["timetables"] });
+
+      // Snapshot the previous value
+      const previousSlotClasses = queryClient.getQueryData<SlotClass[]>([
+        "slotClasses",
+        slotId,
+      ]);
+
+      // Optimistically update to the new value
+      queryClient.setQueryData<SlotClass[]>(["slotClasses", slotId], (old) => {
+        if (!old) return [];
+        return old.map((slotClass) => {
+          if (slotClass.class_id === variables.class_id) {
+            return {
+              ...slotClass,
+              isHidden: variables.newHiddenState,
+            };
+          }
+          return slotClass;
+        });
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousSlotClasses };
+    },
+    // On error, rollback to the previous value
+    onError: (err, variables, context) => {
+      if (context?.previousSlotClasses) {
+        queryClient.setQueryData(
+          ["slotClasses", slotId],
+          context.previousSlotClasses,
+        );
+      }
+    },
+    // Always refetch after error or success
+    onSettled: () => {
+      // void queryClient.invalidateQueries(["slotClasses", slotId]);
+      void queryClient.invalidateQueries({ queryKey: ["timetables"] });
+    },
+  });
+
+  const handleHideClick = () => {
+    // Determine the new hidden state
+    const newHiddenState = !isHidden;
+
+    if (!slotClassData) return;
+
+    // Use the mutation to hide/unhide the class
+    hideClassMutation.mutate({
+      class_id: classData.class_id,
+      timetable_id: classData.timetable_id,
+      year,
+      weekNumber,
+      newHiddenState,
+    });
+
+    setIsDropdownOpen(false);
+  };
+
   const sizeClasses = useMemo(() => {
     if (size === "small") {
       return {
@@ -120,10 +223,14 @@ const ClassItem: React.FC<ClassItemProps> = ({
         style={{ ...style, backgroundColor: classData.color || "#ffffff" }}
         className={`flex w-full touch-none items-center justify-between rounded shadow-sm transition-shadow duration-200 hover:shadow-md ${textColorClass} ${sizeClasses.container}`}
       >
-        <div className="flex items-center justify-start gap-1">
+        <div
+          className={` ${
+            isHidden && "opacity-50"
+          } flex items-center justify-start gap-1`}
+        >
           <Grip
             size={size === "small" ? 16 : 20}
-            className="cursor-move"
+            className={`${isHidden ? "cursor-not-allowed" : "cursor-move"}`}
             {...attributes}
             {...listeners}
           />
@@ -150,6 +257,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
           <span className={`truncate font-medium ${sizeClasses.text}`}>
             {classData.name}
           </span>
+          <span>{isHidden && <EyeOff className="ml-2" size={24} />}</span>
         </div>
         <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
           <DropdownMenuTrigger asChild>
@@ -170,9 +278,15 @@ const ClassItem: React.FC<ClassItemProps> = ({
             >
               <Edit size={16} className="mr-2" /> Edit
             </DropdownMenuItem>
-            {/* <DropdownMenuItem onSelect={handleDetailsClick}>
-              <FileText size={16} className="mr-2" /> Details
-            </DropdownMenuItem> */}
+            {!isHidden ? (
+              <DropdownMenuItem onSelect={handleHideClick}>
+                <EyeOff size={16} className="mr-2" /> Hide
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={handleHideClick}>
+                <Eye size={16} className="mr-2" /> Unhide
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onSelect={handleDisplayClick}>
               <Monitor size={16} className="mr-2" /> Display
             </DropdownMenuItem>

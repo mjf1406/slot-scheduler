@@ -5,6 +5,7 @@ import ClassItem from "./ClassItem";
 import type { Class, SlotClass } from "~/server/db/types";
 import { addExampleClasses } from "../../actions";
 import { getYearAndWeekNumber } from "../../utils";
+import { Divide } from "lucide-react";
 
 interface ClassListProps {
   classes: Class[];
@@ -29,6 +30,8 @@ const ClassList: React.FC<ClassListProps> = ({
 }) => {
   const [classItems, setClassItems] = useState<Class[]>(classes);
   const [isAdding, setIsAdding] = useState(false);
+  // Removed hiddenClasses as it's not necessary for this functionality
+  const [showHidden, setShowHidden] = useState(false); // New state for toggling hidden classes
 
   const { setNodeRef } = useDroppable({
     id: "unassigned-area",
@@ -60,10 +63,22 @@ const ClassList: React.FC<ClassListProps> = ({
       ref={setNodeRef}
       className="mt-5 flex flex-col gap-5 rounded-lg bg-foreground/5 p-3"
     >
-      <div className="w-full">
-        <h3 className="mb-2 text-center text-lg font-medium">
-          Unassigned Classes
-        </h3>
+      <div className="flex w-full flex-col items-center justify-center gap-2">
+        <h3 className="text-center text-lg font-medium">Unassigned Classes</h3>
+        {/* Show the toggle button only if there are hidden classes */}
+        {slotClasses.some(
+          (sc) =>
+            sc.hidden && sc.year === year && sc.week_number === weekNumber,
+        ) && (
+          <div>
+            <Button
+              variant={"outline"}
+              onClick={() => setShowHidden((prev) => !prev)}
+            >
+              {showHidden ? "Hide hidden classes" : "Show hidden classes"}
+            </Button>
+          </div>
+        )}
         {classItems.length === 0 ? (
           <div className="flex justify-center">
             <Button onClick={handleAddExampleClasses} disabled={isAdding}>
@@ -82,6 +97,9 @@ const ClassList: React.FC<ClassListProps> = ({
               );
               const isComplete = slotClass?.complete ?? false;
 
+              // Conditionally render hidden classes based on showHidden state
+              if (slotClass?.hidden && !showHidden) return null;
+
               return (
                 <ClassItem
                   key={cls.class_id}
@@ -92,6 +110,13 @@ const ClassList: React.FC<ClassListProps> = ({
                   onDisplayClick={onDisplayClick}
                   timetableId={timetableId}
                   isComplete={isComplete}
+                  isHidden={slotClass?.hidden ?? false}
+                  slotId={slotClass?.slot_id ?? null}
+                  slotClassData={slotClasses.find(
+                    (i) => i.class_id === cls.class_id,
+                  )}
+                  year={year}
+                  weekNumber={weekNumber}
                 />
               );
             })}

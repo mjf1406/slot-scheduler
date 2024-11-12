@@ -213,10 +213,11 @@ export async function deleteSlot(slot_id: string) {
 
 export async function moveSlotClass(
   classId: string,
-  newSlotId: string,
+  newSlotId: string | null,
   timetableId: string,
   year: number,
-  weekNumber: number
+  weekNumber: number,
+  hidden?: boolean | undefined,
 ) {
   const { userId } = auth();
   if (!userId) throw new Error("User not authenticated");
@@ -227,7 +228,7 @@ export async function moveSlotClass(
     // Update the slot_id of the existing slot_class entry
     const updatedSlotClasses = await db
       .update(slotClassesTable)
-      .set({ slot_id: newSlotId })
+      .set({ slot_id: newSlotId, hidden: hidden })
       .where(
         and(
           eq(slotClassesTable.user_id, userId),
@@ -254,6 +255,7 @@ export async function moveSlotClass(
           week_number: weekNumber,
           size: "whole",
           text: '', // Initialize text as empty or null
+          hidden: hidden,
         })
         .returning();
 
@@ -285,7 +287,6 @@ export async function moveSlotClass(
     };
   }
 }
-
 
 export async function removeSlotClassFromAllSlots(
   classId: string,

@@ -24,6 +24,8 @@ interface TimeSlotProps {
   isPastTimeSlot: (slot: Slot) => boolean;
   isDisabled: boolean | undefined; // New prop
   onToggleDisable: () => void; // New prop
+  year: number; // New prop
+  weekNumber: number; // New prop
 }
 
 export const TimeSlot: React.FC<TimeSlotProps> = ({
@@ -42,12 +44,14 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
   isPastTimeSlot,
   isDisabled, // New prop
   onToggleDisable, // New prop
+  year, // New prop
+  weekNumber, // New prop
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { isOver, setNodeRef } = useDroppable({
     id: slot.slot_id,
-    disabled: slot.disabled, // Prevent dropping if disabled
+    disabled: isDisabled, // Use isDisabled prop to prevent dropping if disabled
     data: {
       type: "TimeSlot",
       slot: slot,
@@ -66,6 +70,7 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
 
   const handleToggleDisable = useCallback(() => {
     onToggleDisable();
+    setIsDropdownOpen(false);
   }, [onToggleDisable]);
 
   const isPast = isPastTimeSlot(slot);
@@ -96,11 +101,11 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
               sc.class_id === classItem.class_id && sc.slot_id === slot.slot_id,
           );
           const isComplete = slotClass?.complete ?? false;
+          const isHidden = slotClass?.hidden ?? false;
 
           return (
             <div key={classItem.class_id} className="flex h-full flex-col">
               <ClassItem
-                key={classItem.class_id}
                 classData={classItem}
                 onEdit={onEditClass}
                 onDelete={onDeleteClass}
@@ -109,6 +114,11 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
                 timetableId={slot.timetable_id}
                 size="small"
                 isComplete={isComplete}
+                isHidden={isHidden} // Added
+                slotId={slot.slot_id} // Added
+                slotClassData={slotClass} // Added
+                year={year} // Added
+                weekNumber={weekNumber} // Added
               />
             </div>
           );
