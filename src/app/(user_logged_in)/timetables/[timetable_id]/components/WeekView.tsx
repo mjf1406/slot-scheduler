@@ -280,8 +280,7 @@ export default function WeekView({
                     onClassClick={onClassClick}
                     onDisplayClick={onDisplayClick}
                     isPastTimeSlot={isPastTimeSlot}
-                    isDisabled={slot.isDisabled} // Pass isDisabled
-                    onToggleDisable={() => handleToggleDisable(slot)} // Pass onToggleDisable
+                    isDisabled={slot.isDisabled ?? []} // Pass isDisabled
                     year={year}
                     weekNumber={weekNumber}
                   />

@@ -1,4 +1,3 @@
-// TimeSlot.tsx
 import React, { useState, useCallback } from "react";
 import type { Slot, Class, SlotClass } from "~/server/db/types";
 import { EditTimeSlotDialog } from "./components/EditTimeSlotDialog";
@@ -8,7 +7,9 @@ import ClassItem from "../class/ClassItem";
 import { cn } from "~/lib/utils";
 import { CircleMinus } from "lucide-react";
 import { toggleSlotDisabled } from "../../actions";
-import { DayOfWeek, getDateFromWeekNumber } from "../../utils";
+import { type DayOfWeek, getDateFromWeekNumber } from "../../utils";
+import { useQueryClient } from "@tanstack/react-query";
+import { timetablesOptions } from "~/app/api/queryOptions";
 
 interface TimeSlotProps {
   slot: Slot;
@@ -24,10 +25,9 @@ interface TimeSlotProps {
   onClassClick: (classData: Class) => void;
   onDisplayClick: (classData: Class) => void;
   isPastTimeSlot: (slot: Slot) => boolean;
-  isDisabled: boolean | undefined; // New prop
-  onToggleDisable: () => void; // New prop
-  year: number; // New prop
-  weekNumber: number; // New prop
+  isDisabled: string[]; // Updated to string[] for dates
+  year: number;
+  weekNumber: number;
 }
 
 export const TimeSlot: React.FC<TimeSlotProps> = ({
@@ -44,17 +44,30 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
   onClassClick,
   onDisplayClick,
   isPastTimeSlot,
-  isDisabled, // New prop
-  onToggleDisable, // New prop
-  year, // New prop
-  weekNumber, // New prop
+  isDisabled,
+  year,
+  weekNumber,
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [disabled, setDisabled] = useState(isDisabled);
+  const queryClient = useQueryClient();
+
+  // Get current date for this slot based on year, week, and day
+  const currentSlotDate = getDateFromWeekNumber(
+    year,
+    weekNumber,
+    slot.day as DayOfWeek,
+  );
+
+  // Check if the current date is in the disabled dates array
+  const isCurrentDateDisabled =
+    currentSlotDate.success && currentSlotDate.date
+      ? isDisabled.includes(currentSlotDate.date)
+      : false;
+
   const { isOver, setNodeRef } = useDroppable({
     id: slot.slot_id,
-    disabled: disabled,
+    disabled: isCurrentDateDisabled,
     data: {
       type: "TimeSlot",
       slot: slot,
@@ -72,7 +85,6 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
   }, [onDeleteSlot, slot.slot_id]);
 
   const handleToggleDisable = useCallback(async () => {
-    setDisabled(!disabled);
     setIsDropdownOpen(false);
     try {
       const disabledDate = getDateFromWeekNumber(
@@ -85,13 +97,17 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
           slot.slot_id,
           disabledDate.date,
         );
-        console.log(result.message);
+        if (result.success) {
+          await queryClient.invalidateQueries({
+            queryKey: timetablesOptions.queryKey,
+          });
+          console.log(result.message);
+        }
       }
     } catch (error) {
       console.error("Error toggling slot disabled status:", error);
-      setDisabled(!disabled);
     }
-  }, [disabled, year, weekNumber, slot.day, slot.slot_id]);
+  }, [year, weekNumber, slot.day, slot.slot_id, queryClient]);
 
   const isPast = isPastTimeSlot(slot);
 
@@ -103,14 +119,14 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
         className={cn(
           "absolute left-1 right-1 flex flex-col justify-between overflow-hidden rounded border border-accent bg-accent/20 p-1",
           { "bg-accent/40": isOver },
-          isPast || disabled ? "opacity-50" : "",
+          isPast || isCurrentDateDisabled ? "opacity-50" : "",
         )}
         style={{ ...getSlotStyle(slot), zIndex: 1 }}
       >
         <div className="text-4xs font-semibold md:text-xs">
           {slot.start_time} - {slot.end_time}
         </div>
-        {disabled && (
+        {isCurrentDateDisabled && (
           <div className="flex h-full w-full items-center justify-center opacity-60">
             <CircleMinus size={54} />
           </div>
@@ -134,11 +150,11 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
                 timetableId={slot.timetable_id}
                 size="small"
                 isComplete={isComplete}
-                isHidden={isHidden} // Added
-                slotId={slot.slot_id} // Added
-                slotClassData={slotClass} // Added
-                year={year} // Added
-                weekNumber={weekNumber} // Added
+                isHidden={isHidden}
+                slotId={slot.slot_id}
+                slotClassData={slotClass}
+                year={year}
+                weekNumber={weekNumber}
               />
             </div>
           );
@@ -150,8 +166,8 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
           <ActionDropdown
             onEdit={handleEditClick}
             onDelete={handleDeleteClick}
-            onToggleDisable={handleToggleDisable} // Pass onToggleDisable
-            isDisabled={disabled}
+            onToggleDisable={handleToggleDisable}
+            isDisabled={isCurrentDateDisabled}
             isOpen={isDropdownOpen}
             onOpenChange={setIsDropdownOpen}
           />

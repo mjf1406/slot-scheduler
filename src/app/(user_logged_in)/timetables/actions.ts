@@ -137,6 +137,8 @@ export async function createClass(data: {
     default_end?: string;
     timetable_id: string;
     color: string;
+    year: number | null;
+    weekNumber: number | null;
     icon_name: string;
     icon_prefix: "fas" | "far";
 }) {
@@ -175,6 +177,8 @@ export async function createClass(data: {
         day: data.default_day ?? null,
         start: data.default_start ?? null,
         end: data.default_end ?? null,
+        year: data.year,
+        week_number: data.weekNumber,
         color: data.color,
         icon_name: data.icon_name,
         icon_prefix: data.icon_prefix,

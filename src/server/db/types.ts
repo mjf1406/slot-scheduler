@@ -13,7 +13,7 @@ export type Slot = {
     day: string;
     start_time: string;
     end_time: string;
-    isDisabled?: boolean | undefined;
+    isDisabled?: string[] | undefined;
 };
 
 export type Timetable = {
@@ -43,6 +43,8 @@ export type Class = {
     icon_name: string;
     icon_prefix: 'fas' | 'far';
     linked_class: string | null;
+    year: number | null;
+    weekNumber: number | null;
 };
 
 export type SlotClass = {

@@ -17,20 +17,25 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 - ⚠️ local-first: use [TinyBase](https://tinybase.org/) to implement a local-first architecture
 - ⚠️ i18n: use [next-international](https://next-international.vercel.app/docs/app-setup) for localization
 - automation: announcements can now be automated. User can add an announcement that is on a given date, then set the range for which to display them, e.g. only display announcements from current day to 3 weeks out.
+- UX: user can now mark an entire day as no school day for the given week only (this will just loop through all the slots on the given day, using the below)
 - UI: reduced zoom level when width is below 1280px so we can fit the whole layout in the small screen
 
 ### p0
 
 - BUG: can now edit the details of a class when it is unassigned
-- BUG: when moving a class from a slot to unassigned and back into a slot, the slot no longer loses its dnd functionality
-- How do we handle the same class being repeated when the class will be in different blocks?
-  - when editing a class, allow a linked class to be selected, where they both share TEXT column data
-    - call this Linked Class and it shares only the TEXT column
-- added: can now create a new class for the current week only
-- UX: user can now mark an entire day as no school day for the given week only (this will just loop through all the slots on the given day, using the below)
-- UX: users can now disable slots using the slot action menu for the given week only
+- BUG: when moving a class from a slot to unassigned and back into a slot, the slot no longer loses its DND functionality
+- How do we handle the same class being repeated when the class will be in different blocks? Options:
+  1. when editing a class, allow a linked class to be selected, where they both share TEXT column data
+     - call this Linked Class and it shares only the TEXT column
+  2. link slots
 
 ## Change Log
+
+2024/11/13
+
+- added: user can now create a new class for the current week only
+- backend: optimized API call by using promise.all, reducing api call from generally over 300ms to generally less than 100ms
+- UX: users can now disable slots using the slot action menu for the given week only
 
 2024/11/12
 

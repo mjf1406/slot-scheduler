@@ -24,7 +24,7 @@ export const classes = sqliteTable('classes',
     class_id: text('class_id').notNull().primaryKey(),
     user_id: text('user_id').notNull().references(() => users.user_id),
     timetable_id: text('timetable_id').notNull().references(() => timetables.timetable_id),
-    linked_class: text('linked_class'), // references class_id
+    linked_class: text('linked_class'),
     name: text('name').notNull(),
     default_day: text('default_day'),
     default_start: text('default_start'),
@@ -35,10 +35,13 @@ export const classes = sqliteTable('classes',
     color: text('color').notNull(),
     icon_name: text('icon_name').notNull(),
     icon_prefix: text('icon_prefix').notNull(),
+    week_number: integer('week_number'),
+    year: integer('year'),
   }, 
   (table) => {
       return {
           classes_by_user_id: index("classes_by_user_id").on(table.user_id),
+          idx_classes_week_year: index("idx_classes_week_year").on(table.week_number, table.year),
           parentReference: foreignKey({
             columns: [table.linked_class],
             foreignColumns: [table.class_id],

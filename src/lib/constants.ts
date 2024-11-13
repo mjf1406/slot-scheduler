@@ -57,12 +57,12 @@ export const LOADING_MESSAGES: string[] = [
 export const MINUTE_SIZE_PIXELS = 1.75
 export const HOUR_SIZE_PIXELS = MINUTE_SIZE_PIXELS * 60
 export const EXAMPLE_CLASSES: Omit<Class, 'user_id' | 'timetable_id' | 'class_id' | 'linked_class'>[] = [
-  { name: 'Grammar', color: '#ff6767', icon_name: 'spell-check', icon_prefix: 'fas' },
-  { name: 'Reading', color: '#2433be', icon_name: 'book-open', icon_prefix: 'fas' },
-  { name: 'Math', color: '#56d6ac', icon_name: 'square-root-variable', icon_prefix: 'fas' },
-  { name: 'Writing', color: '#dbaf2a', icon_name: 'pencil', icon_prefix: 'fas' },
-  { name: 'Vocabulary', color: '#5eb74f', icon_name: 'language', icon_prefix: 'fas' },
-  { name: 'Science', color: '#8624dd', icon_name: 'flask', icon_prefix: 'fas' },
-  { name: 'Social', color: '#ff00de', icon_name: 'earth-africa', icon_prefix: 'fas' },
-  { name: 'Exam', color: '#000000', icon_name: 'file-lines', icon_prefix: 'fas' },
+  { name: 'Grammar', color: '#ff6767', icon_name: 'spell-check', icon_prefix: 'fas', year: null, weekNumber: null },
+  { name: 'Reading', color: '#2433be', icon_name: 'book-open', icon_prefix: 'fas', year: null, weekNumber: null },
+  { name: 'Math', color: '#56d6ac', icon_name: 'square-root-variable', icon_prefix: 'fas', year: null, weekNumber: null },
+  { name: 'Writing', color: '#dbaf2a', icon_name: 'pencil', icon_prefix: 'fas', year: null, weekNumber: null },
+  { name: 'Vocabulary', color: '#5eb74f', icon_name: 'language', icon_prefix: 'fas', year: null, weekNumber: null },
+  { name: 'Science', color: '#8624dd', icon_name: 'flask', icon_prefix: 'fas', year: null, weekNumber: null },
+  { name: 'Social', color: '#ff00de', icon_name: 'earth-africa', icon_prefix: 'fas', year: null, weekNumber: null },
+  { name: 'Exam', color: '#000000', icon_name: 'file-lines', icon_prefix: 'fas', year: null, weekNumber: null },
 ];

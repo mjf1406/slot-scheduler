@@ -800,6 +800,7 @@ export default function TimetablePage() {
                 </h1>
                 <CreateClassDialog
                   timetableId={selectedTimetable.timetable_id}
+                  currentWeekStart={currentWeekStart}
                 />
                 <CreateSlotDialog
                   days={selectedTimetable.days}

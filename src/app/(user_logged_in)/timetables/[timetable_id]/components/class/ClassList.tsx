@@ -5,7 +5,6 @@ import ClassItem from "./ClassItem";
 import type { Class, SlotClass } from "~/server/db/types";
 import { addExampleClasses } from "../../actions";
 import { getYearAndWeekNumber } from "../../utils";
-import { Divide } from "lucide-react";
 
 interface ClassListProps {
   classes: Class[];
@@ -30,8 +29,8 @@ const ClassList: React.FC<ClassListProps> = ({
 }) => {
   const [classItems, setClassItems] = useState<Class[]>(classes);
   const [isAdding, setIsAdding] = useState(false);
-  // Removed hiddenClasses as it's not necessary for this functionality
-  const [showHidden, setShowHidden] = useState(false); // New state for toggling hidden classes
+  const [showHidden, setShowHidden] = useState(false);
+  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
 
   const { setNodeRef } = useDroppable({
     id: "unassigned-area",
@@ -40,9 +39,16 @@ const ClassList: React.FC<ClassListProps> = ({
     },
   });
 
+  // Filter classes - show both nulls AND current week classes
   useEffect(() => {
-    setClassItems(classes);
-  }, [classes]);
+    const nullClasses = classes.filter((cls) => !cls.year && !cls.weekNumber);
+    const currentWeekClasses = classes.filter(
+      (cls) => cls.year === year && cls.weekNumber === weekNumber,
+    );
+
+    const combinedClasses = [...nullClasses, ...currentWeekClasses];
+    setClassItems(combinedClasses);
+  }, [classes, year, weekNumber]);
 
   const handleAddExampleClasses = async () => {
     setIsAdding(true);
@@ -55,8 +61,6 @@ const ClassList: React.FC<ClassListProps> = ({
       setIsAdding(false);
     }
   };
-
-  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
 
   return (
     <div
@@ -85,7 +89,6 @@ const ClassList: React.FC<ClassListProps> = ({
             </Button>
           </div>
         ) : (
-          // <div className="m-auto flex w-full flex-col gap-1">
           <div className="grid w-full grid-cols-2 flex-col gap-1 md:grid-cols-3 lg:grid-cols-4 xl:flex">
             {classItems.map((cls) => {
               if (!cls) return null;
@@ -97,7 +100,6 @@ const ClassList: React.FC<ClassListProps> = ({
               );
               const isComplete = slotClass?.complete ?? false;
 
-              // Conditionally render hidden classes based on showHidden state
               if (slotClass?.hidden && !showHidden) return null;
 
               return (

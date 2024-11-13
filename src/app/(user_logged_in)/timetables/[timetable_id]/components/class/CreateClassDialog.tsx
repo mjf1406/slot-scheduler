@@ -22,29 +22,41 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { Checkbox } from "~/components/ui/checkbox";
 import { toast } from "~/components/ui/use-toast";
 import { Loader2, Plus } from "lucide-react";
 import { createClass } from "../../../actions";
 import type { IconName } from "@fortawesome/fontawesome-svg-core";
 import ColorPicker from "~/components/popover-pickers/ShadcnColorPicker";
 import FAIconPicker from "~/components/popover-pickers/FontAwesomeIconPicker";
+import { getYearAndWeekNumber } from "../../utils";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   color: z.string(),
   icon_name: z.string(),
   icon_prefix: z.enum(["fas", "far"]),
+  includeWeekInfo: z.boolean().default(false),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
-export function CreateClassDialog({ timetableId }: { timetableId: string }) {
+export function CreateClassDialog({
+  timetableId,
+  currentWeekStart,
+}: {
+  timetableId: string;
+  currentWeekStart: Date;
+}) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   useSuspenseQuery(timetablesOptions);
+
+  const { year, weekNumber } = getYearAndWeekNumber(currentWeekStart);
 
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
@@ -53,13 +65,20 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
       color: "#000000",
       icon_name: "",
       icon_prefix: "fas",
+      includeWeekInfo: false,
     },
   });
 
   const onSubmit = async (data: FormSchema) => {
     setIsLoading(true);
     try {
-      const result = await createClass({ ...data, timetable_id: timetableId });
+      const result = await createClass({
+        ...data,
+        timetable_id: timetableId,
+        year: data.includeWeekInfo ? year : null,
+        weekNumber: data.includeWeekInfo ? weekNumber : null,
+      });
+
       if (result.success) {
         toast({
           title: "Success",
@@ -110,7 +129,6 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {/* Form fields remain unchanged */}
               <FormField
                 control={form.control}
                 name="name"
@@ -178,6 +196,29 @@ export function CreateClassDialog({ timetableId }: { timetableId: string }) {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="includeWeekInfo"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>For this week only</FormLabel>
+                      <FormDescription>
+                        This class will only appear in {year} during week{" "}
+                        {weekNumber}.
+                      </FormDescription>
+                    </div>
+                  </FormItem>
+                )}
+              />
+
               <DialogFooter>
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? (
