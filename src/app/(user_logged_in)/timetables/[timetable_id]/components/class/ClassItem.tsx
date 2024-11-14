@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -25,14 +25,14 @@ import type { IconName } from "@fortawesome/fontawesome-svg-core";
 import { getContrastColor } from "~/lib/utils";
 import { useTheme } from "next-themes";
 import { moveSlotClass } from "../../actions";
-import { QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface ClassItemProps {
   classData: Class;
   onEdit: (updatedClass: Class) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClick: (classData: Class) => void;
-  onDisplayClick: (classData: Class) => void; // Add this new prop
+  onDisplayClick: (classData: Class) => void;
   timetableId: string;
   size?: "small" | "normal";
   isDragging?: boolean;
@@ -54,12 +54,13 @@ const ClassItem: React.FC<ClassItemProps> = ({
   size = "normal",
   isDragging = false,
   isComplete = false,
-  isHidden = false,
+  isHidden: initialIsHidden = false, // Renamed prop to initialIsHidden
   slotId,
   slotClassData,
   year,
   weekNumber,
 }) => {
+  const [isHidden, setIsHidden] = useState(initialIsHidden);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: classData.class_id,
     disabled: isHidden,
@@ -77,7 +78,6 @@ const ClassItem: React.FC<ClassItemProps> = ({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isDisplayDialogOpen, setIsDisplayDialogOpen] = useState(false);
   const { theme } = useTheme();
 
   const textColorClass = useMemo(() => {
@@ -114,9 +114,9 @@ const ClassItem: React.FC<ClassItemProps> = ({
   // Get the queryClient instance
   const queryClient = useQueryClient();
 
-  // Set up the mutation with optimistic updates
+  // Set up the mutation for hiding/unhiding the class
   const hideClassMutation = useMutation({
-    mutationFn: (variables: {
+    mutationFn: async (variables: {
       class_id: string;
       timetable_id: string;
       year: number;
@@ -134,58 +134,31 @@ const ClassItem: React.FC<ClassItemProps> = ({
     },
     // Optimistic update
     onMutate: async (variables) => {
-      if (!slotId) {
-        // Optionally, throw an error or handle the null case
-        return;
-      }
-      // Cancel any outgoing refetches
-      // await queryClient.cancelQueries(["slotClasses", slotId]);
-      await queryClient.cancelQueries({ queryKey: ["timetables"] });
+      // Store the previous isHidden state
+      const previousIsHidden = isHidden;
 
-      // Snapshot the previous value
-      const previousSlotClasses = queryClient.getQueryData<SlotClass[]>([
-        "slotClasses",
-        slotId,
-      ]);
+      // Optimistically update the local state
+      setIsHidden(variables.newHiddenState);
 
-      // Optimistically update to the new value
-      queryClient.setQueryData<SlotClass[]>(["slotClasses", slotId], (old) => {
-        if (!old) return [];
-        return old.map((slotClass) => {
-          if (slotClass.class_id === variables.class_id) {
-            return {
-              ...slotClass,
-              isHidden: variables.newHiddenState,
-            };
-          }
-          return slotClass;
-        });
-      });
-
-      // Return a context object with the snapshotted value
-      return { previousSlotClasses };
+      // Return context to be used in case of error
+      return { previousIsHidden };
     },
-    // On error, rollback to the previous value
+    // On error, rollback to the previous state
     onError: (err, variables, context) => {
-      if (context?.previousSlotClasses) {
-        queryClient.setQueryData(
-          ["slotClasses", slotId],
-          context.previousSlotClasses,
-        );
+      if (context?.previousIsHidden !== undefined) {
+        setIsHidden(context.previousIsHidden);
       }
     },
     // Always refetch after error or success
     onSettled: () => {
-      // void queryClient.invalidateQueries(["slotClasses", slotId]);
+      // Invalidate queries to sync with server data
       void queryClient.invalidateQueries({ queryKey: ["timetables"] });
     },
   });
 
-  const handleHideClick = () => {
+  const handleHideClick = useCallback(() => {
     // Determine the new hidden state
     const newHiddenState = !isHidden;
-
-    if (!slotClassData) return;
 
     // Use the mutation to hide/unhide the class
     hideClassMutation.mutate({
@@ -197,7 +170,14 @@ const ClassItem: React.FC<ClassItemProps> = ({
     });
 
     setIsDropdownOpen(false);
-  };
+  }, [
+    classData.class_id,
+    classData.timetable_id,
+    hideClassMutation,
+    isHidden,
+    year,
+    weekNumber,
+  ]);
 
   const sizeClasses = useMemo(() => {
     if (size === "small") {

@@ -29,13 +29,13 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
   - [ ] edit class: currently not so bad even though it's not optimistic
   - [x] delete class
   - [ ] edit class Display text
-  - [ ] hide class
-  - [ ] unhide class
+  - [x] hide class: there's a small flash of hidden UI state before it disappears, which is okay?
+  - [x] unhide class
   - [x] create slot: not possible because we need the id that's generated on the server
   - [x] edit slot
   - [x] delete slot
-  - [ ] disable slot: slow currently as not optimistic
-  - [ ] enable slot: slow currently as not optimistic
+  - [x] disable slot
+  - [x] enable slot
   - [x] move class
 - How do we handle the same class being repeated when the class will be in different blocks? Options:
   1. when editing a class, allow a linked class to be selected, where they both share TEXT column data
@@ -46,6 +46,8 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 2024/11/14
 
+- UX: hide/unhide a class is now optimistic
+- UX: disabling/enabling a slot is now optimistic
 - UX: reduced query time to disable/enable a slot
 
 2024/11/13

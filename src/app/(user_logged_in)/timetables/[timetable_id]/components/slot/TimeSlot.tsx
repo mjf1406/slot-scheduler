@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import type { Slot, Class, SlotClass } from "~/server/db/types";
 import { EditTimeSlotDialog } from "./components/EditTimeSlotDialog";
 import { ActionDropdown } from "./components/ActionDropdown";
@@ -25,7 +25,7 @@ interface TimeSlotProps {
   onClassClick: (classData: Class) => void;
   onDisplayClick: (classData: Class) => void;
   isPastTimeSlot: (slot: Slot) => boolean;
-  isDisabled: string[]; // Updated to string[] for dates
+  isDisabled: string[]; // Array of dates when slots are disabled
   year: number;
   weekNumber: number;
 }
@@ -52,18 +52,27 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Get current date for this slot based on year, week, and day
-  const currentSlotDate = getDateFromWeekNumber(
+  const currentSlotDateResult = getDateFromWeekNumber(
     year,
     weekNumber,
     slot.day as DayOfWeek,
   );
 
-  // Check if the current date is in the disabled dates array
-  const isCurrentDateDisabled =
-    currentSlotDate.success && currentSlotDate.date
-      ? isDisabled.includes(currentSlotDate.date)
-      : false;
+  const currentDateString = currentSlotDateResult.success
+    ? currentSlotDateResult.date
+    : null;
+
+  // Initialize isCurrentDateDisabled from isDisabled prop
+  const [isCurrentDateDisabled, setIsCurrentDateDisabled] = useState(() => {
+    return currentDateString ? isDisabled.includes(currentDateString) : false;
+  });
+
+  // Update isCurrentDateDisabled when isDisabled or currentDateString changes
+  useEffect(() => {
+    setIsCurrentDateDisabled(
+      currentDateString ? isDisabled.includes(currentDateString) : false,
+    );
+  }, [currentDateString, isDisabled]);
 
   const { isOver, setNodeRef } = useDroppable({
     id: slot.slot_id,
@@ -86,28 +95,34 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
 
   const handleToggleDisable = useCallback(async () => {
     setIsDropdownOpen(false);
+
+    if (!currentDateString) return;
+
+    // Store the previous state
+    const previousIsCurrentDateDisabled = isCurrentDateDisabled;
+
+    // Optimistically update the local state
+    setIsCurrentDateDisabled(!isCurrentDateDisabled);
+
     try {
-      const disabledDate = getDateFromWeekNumber(
-        year,
-        weekNumber,
-        slot.day as DayOfWeek,
-      );
-      if (disabledDate.success && disabledDate.date) {
-        const result = await toggleSlotDisabled(
-          slot.slot_id,
-          disabledDate.date,
-        );
-        if (result.success) {
-          await queryClient.invalidateQueries({
-            queryKey: timetablesOptions.queryKey,
-          });
-          console.log(result.message);
-        }
+      const result = await toggleSlotDisabled(slot.slot_id, currentDateString);
+
+      if (!result.success) {
+        // If the server request failed, revert to the previous state
+        setIsCurrentDateDisabled(previousIsCurrentDateDisabled);
+        console.error("Failed to toggle slot disabled status:", result);
+      } else {
+        // Success - invalidate the query to ensure sync with server
+        await queryClient.invalidateQueries({
+          queryKey: timetablesOptions.queryKey,
+        });
       }
     } catch (error) {
+      // On error, revert to the previous state
+      setIsCurrentDateDisabled(previousIsCurrentDateDisabled);
       console.error("Error toggling slot disabled status:", error);
     }
-  }, [year, weekNumber, slot.day, slot.slot_id, queryClient]);
+  }, [slot.slot_id, currentDateString, isCurrentDateDisabled, queryClient]);
 
   const isPast = isPastTimeSlot(slot);
 
