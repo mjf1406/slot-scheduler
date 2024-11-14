@@ -24,12 +24,29 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 - BUG: can now edit the details of a class when it is unassigned
 - BUG: when moving a class from a slot to unassigned and back into a slot, the slot no longer loses its DND functionality
+- optimistic updates across the UI:
+  - [x] add class: not possible because need the id that's generated on the server
+  - [ ] edit class: currently not so bad even though it's not optimistic
+  - [x] delete class
+  - [ ] edit class Display text
+  - [ ] hide class
+  - [ ] unhide class
+  - [x] create slot: not possible because we need the id that's generated on the server
+  - [x] edit slot
+  - [x] delete slot
+  - [ ] disable slot: slow currently as not optimistic
+  - [ ] enable slot: slow currently as not optimistic
+  - [x] move class
 - How do we handle the same class being repeated when the class will be in different blocks? Options:
   1. when editing a class, allow a linked class to be selected, where they both share TEXT column data
      - call this Linked Class and it shares only the TEXT column
   2. link slots
 
 ## Change Log
+
+2024/11/14
+
+- UX: reduced query time to disable/enable a slot
 
 2024/11/13
 

@@ -414,90 +414,80 @@ export async function addExampleClasses(timetableId: string): Promise<Class[]> {
   return newClasses;
 }
 
-// export async function toggleSlotDisabled(slotId: string) {
+// export async function toggleSlotDisabled(slotId: string, disableDate: string) {
+
+//   // Authenticate the user
 //   const { userId } = auth();
 //   if (!userId) throw new Error("User not authenticated");
 
 //   try {
-//     // Check if the slot is currently disabled for the user
+//     // Check if the slot is currently disabled on the specified date
 //     const existingDisabledSlot = await db
 //       .select()
 //       .from(disabled_slots)
 //       .where(
 //         and(
 //           eq(disabled_slots.slot_id, slotId),
+//           eq(disabled_slots.disable_date, disableDate),
 //           eq(disabled_slots.user_id, userId)
 //         )
 //       );
 
 //     if (existingDisabledSlot.length > 0) {
-//       // Enable the slot by deleting the entry
+//       // Slot is currently disabled, enable it by deleting the entry
 //       await db
 //         .delete(disabled_slots)
 //         .where(
 //           and(
 //             eq(disabled_slots.slot_id, slotId),
+//             eq(disabled_slots.disable_date, disableDate),
 //             eq(disabled_slots.user_id, userId)
 //           )
 //         );
 
-//       return { success: true, status: "enabled", message: "Slot enabled." };
+//       return { success: true, status: "enabled", message: "Slot enabled for the specified date." };
 //     } else {
-//       // Disable the slot by inserting a new entry
+//       // Slot is not disabled, disable it by inserting a new entry
 //       await db
 //         .insert(disabled_slots)
 //         .values({
 //           id: generateUuidWithPrefix("disabled_"),
 //           slot_id: slotId,
+//           disable_date: disableDate,
 //           user_id: userId,
 //         });
 
-//       return { success: true, status: "disabled", message: "Slot disabled." };
+//       return { success: true, status: "disabled", message: "Slot disabled for the specified date." };
 //     }
 //   } catch (error) {
 //     console.error("Error toggling slot disabled status:", error);
 //     return {
 //       success: false,
 //       message: "Failed to toggle slot disabled status",
+//       // error: error.message,
 //     };
 //   }
 // }
 
 export async function toggleSlotDisabled(slotId: string, disableDate: string) {
-  console.log(`Toggling disabled status for slot: ${slotId} on date: ${disableDate}`);
-
-  // Authenticate the user
   const { userId } = auth();
   if (!userId) throw new Error("User not authenticated");
 
   try {
-    // Check if the slot is currently disabled on the specified date
-    const existingDisabledSlot = await db
-      .select()
-      .from(disabled_slots)
+    // Attempt to delete first - more efficient than checking existence
+    const deleteResult = await db
+      .delete(disabled_slots)
       .where(
         and(
           eq(disabled_slots.slot_id, slotId),
           eq(disabled_slots.disable_date, disableDate),
           eq(disabled_slots.user_id, userId)
         )
-      );
+      )
+      .returning(); // Use returning() to get info about the deleted row
 
-    if (existingDisabledSlot.length > 0) {
-      // Slot is currently disabled, enable it by deleting the entry
-      await db
-        .delete(disabled_slots)
-        .where(
-          and(
-            eq(disabled_slots.slot_id, slotId),
-            eq(disabled_slots.disable_date, disableDate),
-            eq(disabled_slots.user_id, userId)
-          )
-        );
-
-      return { success: true, status: "enabled", message: "Slot enabled for the specified date." };
-    } else {
-      // Slot is not disabled, disable it by inserting a new entry
+    // If nothing was deleted, then insert
+    if (deleteResult.length === 0) {
       await db
         .insert(disabled_slots)
         .values({
@@ -509,12 +499,13 @@ export async function toggleSlotDisabled(slotId: string, disableDate: string) {
 
       return { success: true, status: "disabled", message: "Slot disabled for the specified date." };
     }
+
+    return { success: true, status: "enabled", message: "Slot enabled for the specified date." };
   } catch (error) {
     console.error("Error toggling slot disabled status:", error);
     return {
       success: false,
       message: "Failed to toggle slot disabled status",
-      // error: error.message,
     };
   }
 }
