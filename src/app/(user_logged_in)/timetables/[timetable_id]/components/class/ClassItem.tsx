@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -42,6 +42,7 @@ interface ClassItemProps {
   slotClassData?: SlotClass | undefined;
   year: number;
   weekNumber: number;
+  onHiddenChange: (class_id: string, newHiddenState: boolean) => void;
 }
 
 const ClassItem: React.FC<ClassItemProps> = ({
@@ -54,13 +55,13 @@ const ClassItem: React.FC<ClassItemProps> = ({
   size = "normal",
   isDragging = false,
   isComplete = false,
-  isHidden: initialIsHidden = false, // Renamed prop to initialIsHidden
+  isHidden = false,
   slotId,
   slotClassData,
   year,
   weekNumber,
+  onHiddenChange,
 }) => {
-  const [isHidden, setIsHidden] = useState(initialIsHidden);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: classData.class_id,
     disabled: isHidden,
@@ -132,23 +133,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
         variables.newHiddenState,
       );
     },
-    // Optimistic update
-    onMutate: async (variables) => {
-      // Store the previous isHidden state
-      const previousIsHidden = isHidden;
-
-      // Optimistically update the local state
-      setIsHidden(variables.newHiddenState);
-
-      // Return context to be used in case of error
-      return { previousIsHidden };
-    },
-    // On error, rollback to the previous state
-    onError: (err, variables, context) => {
-      if (context?.previousIsHidden !== undefined) {
-        setIsHidden(context.previousIsHidden);
-      }
-    },
+    // Optimistic update is handled by parent component
     // Always refetch after error or success
     onSettled: () => {
       // Invalidate queries to sync with server data
@@ -169,6 +154,9 @@ const ClassItem: React.FC<ClassItemProps> = ({
       newHiddenState,
     });
 
+    // Optimistically update the parent component
+    onHiddenChange(classData.class_id, newHiddenState);
+
     setIsDropdownOpen(false);
   }, [
     classData.class_id,
@@ -177,6 +165,7 @@ const ClassItem: React.FC<ClassItemProps> = ({
     isHidden,
     year,
     weekNumber,
+    onHiddenChange,
   ]);
 
   const sizeClasses = useMemo(() => {
@@ -258,14 +247,18 @@ const ClassItem: React.FC<ClassItemProps> = ({
             >
               <Edit size={16} className="mr-2" /> Edit
             </DropdownMenuItem>
-            {!isHidden ? (
-              <DropdownMenuItem onSelect={handleHideClick}>
-                <EyeOff size={16} className="mr-2" /> Hide
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onSelect={handleHideClick}>
-                <Eye size={16} className="mr-2" /> Unhide
-              </DropdownMenuItem>
+            {size === "normal" && (
+              <>
+                {!isHidden ? (
+                  <DropdownMenuItem onSelect={handleHideClick}>
+                    <EyeOff size={16} className="mr-2" /> Hide
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onSelect={handleHideClick}>
+                    <Eye size={16} className="mr-2" /> Unhide
+                  </DropdownMenuItem>
+                )}
+              </>
             )}
             <DropdownMenuItem onSelect={handleDisplayClick}>
               <Monitor size={16} className="mr-2" /> Display

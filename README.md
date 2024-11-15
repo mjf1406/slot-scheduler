@@ -29,7 +29,7 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
   - [ ] edit class: currently not so bad even though it's not optimistic
   - [x] delete class
   - [ ] edit class Display text
-  - [x] hide class: there's a small flash of hidden UI state before it disappears, which is okay?
+  - [x] hide class
   - [x] unhide class
   - [x] create slot: not possible because we need the id that's generated on the server
   - [x] edit slot
@@ -43,6 +43,11 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
   2. link slots
 
 ## Change Log
+
+2024/11/15
+
+- UX: hide/unhide is now optimistically updated, resulting in the classes disappearing/appearing instantly.
+- UX: a class can no longer be hidden when in a slot. They can only be hidden when in Unassigned Classes
 
 2024/11/14
 

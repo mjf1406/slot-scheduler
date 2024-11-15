@@ -170,6 +170,9 @@ export const TimeSlot: React.FC<TimeSlotProps> = ({
                 slotClassData={slotClass}
                 year={year}
                 weekNumber={weekNumber}
+                onHiddenChange={() => {
+                  // No-op
+                }}
               />
             </div>
           );

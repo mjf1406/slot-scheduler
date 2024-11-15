@@ -73,6 +73,9 @@ export default function WeekView({
             slotId={slot.slot_id} // Added
             year={year} // Added
             weekNumber={weekNumber} // Added
+            onHiddenChange={() => {
+              // No-op
+            }}
           />
         </div>
       </div>

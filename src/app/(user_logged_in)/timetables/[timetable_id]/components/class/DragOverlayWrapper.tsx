@@ -51,6 +51,9 @@ const DragOverlayWrapper: React.FC = () => {
           onDisplayClick={() => {
             // No-op
           }}
+          onHiddenChange={() => {
+            // No-op
+          }}
           isComplete={activeData.isComplete ?? false}
           isHidden={activeData.isHidden ?? false}
           slotId={activeData.slotId ?? null}
