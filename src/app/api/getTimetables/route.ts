@@ -6,7 +6,7 @@ import type { Timetable, Class, Slot, SlotClass } from '~/server/db/types';
 import { auth } from '@clerk/nextjs/server';
 
 export async function GET() {
-    const { userId } = await auth();
+    const { userId } = auth();
     if (!userId) {
         return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
     }
