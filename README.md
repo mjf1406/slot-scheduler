@@ -44,6 +44,11 @@ Create and manage timetables. Use predefined slots with drag-and-drop functional
 
 ## Change Log
 
+2025/01/27
+
+- UX: added a favicon
+- UX: changed the logo
+
 2024/11/15
 
 - UX: hide/unhide is now optimistically updated, resulting in the classes disappearing/appearing instantly.
