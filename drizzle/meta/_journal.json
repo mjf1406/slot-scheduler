@@ -36,6 +36,13 @@
       "when": 1731489693345,
       "tag": "0004_add-year-week-to-classes-table",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1744277815579,
+      "tag": "0005_fuck_nut",
+      "breakpoints": true
     }
   ]
 }
